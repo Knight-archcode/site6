@@ -119,6 +119,11 @@
             background: rgba(255, 255, 255, 0.1);
             transform: translateX(4px);
         }
+        
+        .icon-btn.selected {
+            background: rgba(79, 70, 229, 0.5) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
     </style>
 </head>
 <body class="p-4">
@@ -334,6 +339,13 @@
                         hotelData.floors = {};
                         console.warn('Admin: Fixed missing floors object');
                     }
+                    
+                    // Ensure each floor has required arrays
+                    Object.keys(hotelData.floors).forEach(floorNum => {
+                        const floor = hotelData.floors[floorNum];
+                        if (!floor.markers) floor.markers = [];
+                        if (!floor.connections) floor.connections = [];
+                    });
                 } catch (e) {
                     console.error('Admin: Error parsing saved data:', e);
                     hotelData = { floors: {} };
@@ -519,10 +531,12 @@
             
             floorNumbers.forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
-                const option = document.createElement('option');
-                option.value = floorNum;
-                option.textContent = floor.name;
-                selector.appendChild(option);
+                if (floor) {
+                    const option = document.createElement('option');
+                    option.value = floorNum;
+                    option.textContent = floor.name;
+                    selector.appendChild(option);
+                }
             });
             
             if (currentFloor) {
@@ -544,7 +558,7 @@
 
         function updateFloorIndicator() {
             const indicator = document.getElementById('floorIndicator');
-            if (currentFloor) {
+            if (currentFloor && hotelData.floors[currentFloor]) {
                 indicator.textContent = `Current: ${hotelData.floors[currentFloor].name}`;
             } else {
                 indicator.textContent = '';
@@ -662,15 +676,20 @@
         function selectIcon(icon) {
             selectedIcon = icon;
             document.querySelectorAll('.icon-btn').forEach(btn => {
-                btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                btn.classList.remove('selected');
             });
-            event.target.style.background = 'rgba(79, 70, 229, 0.5)';
+            event.target.classList.add('selected');
         }
 
         function createMarker() {
             const name = document.getElementById('markerName').value.trim();
             if (!name) {
                 alert('Please enter a marker name');
+                return;
+            }
+            
+            if (!tempMarkerPosition) {
+                alert('No position selected. Please click on the floor plan to select a position.');
                 return;
             }
             
@@ -683,6 +702,14 @@
             };
             
             // Ensure markers array exists
+            if (!hotelData.floors[currentFloor]) {
+                hotelData.floors[currentFloor] = {
+                    name: `Floor ${currentFloor}`,
+                    markers: [],
+                    connections: []
+                };
+            }
+            
             if (!hotelData.floors[currentFloor].markers) {
                 hotelData.floors[currentFloor].markers = [];
             }
@@ -701,15 +728,20 @@
                 document.getElementById('markerName').value = '';
                 selectedIcon = '🛏️';
                 document.querySelectorAll('.icon-btn').forEach(btn => {
-                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                    btn.classList.remove('selected');
                 });
+                document.querySelector('.icon-btn').classList.add('selected');
             }
         }
 
         function deleteMarker(markerId) {
             const floor = hotelData.floors[currentFloor];
+            if (!floor) return;
+            
             floor.markers = floor.markers.filter(m => m.id !== markerId);
-            floor.connections = floor.connections.filter(c => !c.includes(markerId));
+            if (floor.connections) {
+                floor.connections = floor.connections.filter(c => !c.includes(markerId));
+            }
             loadFloorPlan();
             saveData();
         }
@@ -756,6 +788,7 @@
 
         function connectMarkers(id1, id2) {
             const floor = hotelData.floors[currentFloor];
+            if (!floor) return;
             
             // Ensure connections array exists
             if (!floor.connections) {
@@ -779,13 +812,13 @@
 
         function disconnectMarkers(id1, id2) {
             const floor = hotelData.floors[currentFloor];
-            const originalLength = floor.connections ? floor.connections.length : 0;
+            if (!floor || !floor.connections) return;
             
-            if (floor.connections) {
-                floor.connections = floor.connections.filter(c => 
-                    !((c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1))
-                );
-            }
+            const originalLength = floor.connections.length;
+            
+            floor.connections = floor.connections.filter(c => 
+                !((c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1))
+            );
             
             if (floor.connections.length < originalLength) {
                 loadFloorPlan();
@@ -800,7 +833,7 @@
             const container = document.getElementById('floorPlanContainer');
             const floor = hotelData.floors[currentFloor];
             
-            if (floor.markers && floor.markers.length > 0) {
+            if (floor && floor.markers && floor.markers.length > 0) {
                 floor.markers.forEach(marker => {
                     const markerEl = document.createElement('div');
                     markerEl.className = 'marker';
@@ -819,7 +852,7 @@
             const container = document.getElementById('floorPlanContainer');
             const floor = hotelData.floors[currentFloor];
             
-            if (floor.connections && floor.connections.length > 0) {
+            if (floor && floor.connections && floor.connections.length > 0) {
                 floor.connections.forEach(([id1, id2]) => {
                     const marker1 = floor.markers?.find(m => m.id === id1);
                     const marker2 = floor.markers?.find(m => m.id === id2);
@@ -849,7 +882,7 @@
             const list = document.getElementById('markersList');
             const floor = hotelData.floors[currentFloor];
             
-            if (!floor.markers || !floor.markers.length) {
+            if (!floor || !floor.markers || !floor.markers.length) {
                 list.innerHTML = '<p class="text-gray-400 text-sm">No markers yet</p>';
                 return;
             }
