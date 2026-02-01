@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Hopper Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .mono {
+            font-family: 'DM Mono', monospace;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .marker {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #4f46e5;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            z-index: 10;
+        }
+        
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        }
+        
+        .marker.selected {
+            background: rgba(79, 70, 229, 0.7);
+            border-color: #ffffff;
+            transform: translate(-50%, -50%) scale(1.3);
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.8);
+        }
+        
+        .connection-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            transform-origin: 0 0;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+            z-index: 5;
+        }
+        
+        .mode-button {
+            transition: all 0.3s ease;
+        }
+        
+        .mode-button.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.5);
+        }
+        
+        .login-container {
+            animation: fadeIn 0.6s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5);
+        }
+        
+        .floor-plan-container {
+            position: relative;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            min-height: 600px;
+        }
+        
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body class="p-4">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+        <div class="login-container glass-panel rounded-2xl p-8 max-w-md w-full">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🏨</div>
+                <h1 class="text-4xl font-bold text-white mb-2">Hotel Hopper</h1>
+                <p class="text-gray-300 text-sm mono">Admin Navigation Panel</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="admin">
+                </div>
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="••••">
+                </div>
+                <button onclick="login()" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
+                    Sign In
+                </button>
+                <p class="text-xs text-gray-400 text-center mt-4 mono">Default: admin / 1234</p>
+            </div>
+            
+            <div id="loginError" class="mt-4 text-red-400 text-sm text-center hidden"></div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden">
+        <!-- Header -->
+        <div class="glass-panel rounded-2xl p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="text-4xl">🏨</div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Hotel Hopper Navigator</h1>
+                        <p class="text-gray-300 text-sm mono">Admin Control Panel</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/30 transition-all">
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Floor Management -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span>🏢</span> Floors
+                    </h2>
+                    
+                    <div class="space-y-3 mb-4">
+                        <select id="floorSelector" onchange="switchFloor()" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-indigo-500">
+                            <option value="">Select Floor</option>
+                        </select>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" id="newFloorName" placeholder="Floor name" class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500">
+                            <button onclick="addFloor()" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-semibold">Add</button>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="renameFloor()" class="flex-1 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 rounded-lg text-sm border border-yellow-500/30 transition-all">Rename</button>
+                            <button onclick="deleteFloor()" class="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floor Plan Upload -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span>🗺️</span> Floor Plan
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <input type="file" id="floorPlanInput" accept="image/*" onchange="uploadFloorPlan()" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 file:cursor-pointer">
+                        
+                        <button onclick="clearMap()" class="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Clear Map</button>
+                    </div>
+                </div>
+
+                <!-- Editing Modes -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span>✏️</span> Edit Mode
+                    </h2>
+                    
+                    <div class="space-y-2">
+                        <button onclick="setMode('add')" id="modeAdd" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
+                            ➕ Add Marker
+                        </button>
+                        <button onclick="setMode('delete')" id="modeDelete" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
+                            ❌ Delete Marker
+                        </button>
+                        <button onclick="setMode('connect')" id="modeConnect" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
+                            🔗 Connect Markers
+                        </button>
+                        <button onclick="setMode('disconnect')" id="modeDisconnect" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
+                            🔓 Disconnect
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Markers List -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span>📍</span> Markers
+                    </h2>
+                    
+                    <div id="markersList" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-gray-400 text-sm">No markers yet</p>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button onclick="saveData()" class="w-full btn-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg">
+                    💾 Save Changes
+                </button>
+                
+                <!-- Debug Button -->
+                <button onclick="debugData()" class="w-full px-4 py-2 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 rounded-lg text-sm border border-gray-500/30 transition-all mt-2">
+                    🐛 Debug Data
+                </button>
+            </div>
+
+            <!-- Main Editor -->
+            <div class="lg:col-span-3">
+                <div class="glass-panel rounded-2xl p-6">
+                    <div class="mb-4 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">Floor Plan Editor</h2>
+                            <p class="text-gray-300 text-sm mono" id="currentModeText">Select a floor to begin</p>
+                        </div>
+                        <div class="text-gray-300 text-sm mono" id="floorIndicator"></div>
+                    </div>
+                    
+                    <div id="floorPlanContainer" class="floor-plan-container relative bg-gray-800 flex items-center justify-center">
+                        <p class="text-gray-500 text-center p-8">
+                            <span class="text-4xl block mb-2">🗺️</span>
+                            Upload a floor plan to get started
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marker Creation Modal -->
+    <div id="markerModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onclick="closeMarkerModal(event)">
+        <div class="glass-panel rounded-2xl p-6 max-w-md w-full mx-4" onclick="event.stopPropagation()">
+            <h3 class="text-2xl font-bold text-white mb-4">Create Marker</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Marker Name</label>
+                    <input type="text" id="markerName" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500" placeholder="e.g., Room 205">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Icon</label>
+                    <div class="grid grid-cols-6 gap-2">
+                        <button onclick="selectIcon('🛏️')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🛏️</button>
+                        <button onclick="selectIcon('🍽️')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🍽️</button>
+                        <button onclick="selectIcon('🛗')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🛗</button>
+                        <button onclick="selectIcon('🏊')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🏊</button>
+                        <button onclick="selectIcon('💪')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">💪</button>
+                        <button onclick="selectIcon('🧼')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🧼</button>
+                        <button onclick="selectIcon('🚻')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🚻</button>
+                        <button onclick="selectIcon('🧳')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🧳</button>
+                        <button onclick="selectIcon('☕')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">☕</button>
+                        <button onclick="selectIcon('🛎️')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🛎️</button>
+                        <button onclick="selectIcon('🔒')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🔒</button>
+                        <button onclick="selectIcon('🚪')" class="icon-btn p-3 text-2xl bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all">🚪</button>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeMarkerModal()" class="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg border border-white/20 transition-all">Cancel</button>
+                    <button onclick="createMarker()" class="flex-1 px-4 py-2 btn-primary text-white rounded-lg font-semibold">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data structure
+        let hotelData = { floors: {} };
+        let currentFloor = null;
+        let editMode = null;
+        let tempMarkerPosition = null;
+        let selectedIcon = '🛏️';
+        let connectionStart = null;
+
+        // Load data from localStorage
+        function loadData() {
+            console.log('Admin: Loading data from localStorage...');
+            const saved = localStorage.getItem('hotelHopperData');
+            
+            if (saved) {
+                try {
+                    hotelData = JSON.parse(saved);
+                    console.log('Admin: Successfully loaded data:', hotelData);
+                    
+                    // Ensure proper data structure
+                    if (!hotelData.floors) {
+                        hotelData.floors = {};
+                        console.warn('Admin: Fixed missing floors object');
+                    }
+                } catch (e) {
+                    console.error('Admin: Error parsing saved data:', e);
+                    hotelData = { floors: {} };
+                }
+            } else {
+                console.log('Admin: No data found, starting fresh');
+                hotelData = { floors: {} };
+            }
+            
+            updateFloorSelector();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            try {
+                console.log('Admin: Saving data to localStorage...', hotelData);
+                
+                // Ensure all floors have required properties
+                Object.keys(hotelData.floors).forEach(floorNum => {
+                    const floor = hotelData.floors[floorNum];
+                    if (!floor.markers) floor.markers = [];
+                    if (!floor.connections) floor.connections = [];
+                    if (!floor.name) floor.name = `Floor ${floorNum}`;
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('hotelHopperData', JSON.stringify(hotelData));
+                
+                // Verify save was successful
+                const verify = localStorage.getItem('hotelHopperData');
+                if (verify) {
+                    console.log('Admin: Save verified successfully');
+                }
+                
+                // Show success message
+                const floorCount = Object.keys(hotelData.floors).length;
+                const totalMarkers = Object.values(hotelData.floors).reduce((sum, floor) => sum + (floor.markers?.length || 0), 0);
+                const totalConnections = Object.values(hotelData.floors).reduce((sum, floor) => sum + (floor.connections?.length || 0), 0);
+                
+                alert(`✅ Changes saved successfully!\nFloors: ${floorCount}\nMarkers: ${totalMarkers}\nConnections: ${totalConnections}`);
+                
+            } catch (error) {
+                console.error('Admin: Error saving data:', error);
+                alert('❌ Error saving data. Check console for details.');
+            }
+        }
+
+        // Debug function to check data
+        function debugData() {
+            console.log('=== DEBUG DATA ===');
+            console.log('Current hotelData:', hotelData);
+            
+            const saved = localStorage.getItem('hotelHopperData');
+            console.log('LocalStorage data:', saved);
+            
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const floorCount = Object.keys(parsed.floors || {}).length;
+                    const totalMarkers = Object.values(parsed.floors || {}).reduce((sum, floor) => sum + (floor.markers?.length || 0), 0);
+                    const totalConnections = Object.values(parsed.floors || {}).reduce((sum, floor) => sum + (floor.connections?.length || 0), 0);
+                    
+                    alert(`Data Status:\n- ${floorCount} floor(s)\n- ${totalMarkers} marker(s)\n- ${totalConnections} connection(s)\nCheck console for full details`);
+                } catch(e) {
+                    alert('Data corrupted in localStorage');
+                }
+            } else {
+                alert('No data in localStorage');
+            }
+            
+            // Also check current floor data
+            if (currentFloor) {
+                const floor = hotelData.floors[currentFloor];
+                console.log(`Current floor (${currentFloor}):`, floor);
+                console.log(`Markers:`, floor.markers);
+                console.log(`Connections:`, floor.connections);
+            }
+        }
+
+        // Login functionality
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin' && password === '1234') {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadData();
+            } else {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = 'Invalid credentials';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Check session on load
+        window.onload = function() {
+            console.log('Admin page loaded');
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadData();
+            }
+        };
+
+        // Floor management
+        function addFloor() {
+            const name = document.getElementById('newFloorName').value.trim();
+            if (!name) {
+                alert('Please enter a floor name');
+                return;
+            }
+            
+            // Find next available floor number
+            let floorNum = 1;
+            while (hotelData.floors[floorNum]) {
+                floorNum++;
+            }
+            
+            hotelData.floors[floorNum] = {
+                name: name,
+                floorNumber: floorNum.toString(),
+                floorPlanUrl: null,
+                markers: [],
+                connections: []
+            };
+            
+            document.getElementById('newFloorName').value = '';
+            updateFloorSelector();
+            
+            // Select the new floor
+            document.getElementById('floorSelector').value = floorNum;
+            switchFloor();
+            
+            saveData();
+        }
+
+        function deleteFloor() {
+            if (!currentFloor) {
+                alert('Please select a floor to delete');
+                return;
+            }
+            
+            if (confirm(`Delete ${hotelData.floors[currentFloor].name}?`)) {
+                delete hotelData.floors[currentFloor];
+                currentFloor = null;
+                updateFloorSelector();
+                clearFloorPlan();
+                saveData();
+            }
+        }
+
+        function renameFloor() {
+            if (!currentFloor) {
+                alert('Please select a floor to rename');
+                return;
+            }
+            
+            const newName = prompt('Enter new floor name:', hotelData.floors[currentFloor].name);
+            if (newName && newName.trim()) {
+                hotelData.floors[currentFloor].name = newName.trim();
+                updateFloorSelector();
+                updateFloorIndicator();
+                saveData();
+            }
+        }
+
+        function updateFloorSelector() {
+            const selector = document.getElementById('floorSelector');
+            selector.innerHTML = '<option value="">Select Floor</option>';
+            
+            // Sort floors by number
+            const floorNumbers = Object.keys(hotelData.floors).map(Number).sort((a, b) => a - b);
+            
+            floorNumbers.forEach(floorNum => {
+                const floor = hotelData.floors[floorNum];
+                const option = document.createElement('option');
+                option.value = floorNum;
+                option.textContent = floor.name;
+                selector.appendChild(option);
+            });
+            
+            if (currentFloor) {
+                selector.value = currentFloor;
+            }
+        }
+
+        function switchFloor() {
+            const selector = document.getElementById('floorSelector');
+            currentFloor = selector.value;
+            
+            if (currentFloor) {
+                loadFloorPlan();
+                updateFloorIndicator();
+            } else {
+                clearFloorPlan();
+            }
+        }
+
+        function updateFloorIndicator() {
+            const indicator = document.getElementById('floorIndicator');
+            if (currentFloor) {
+                indicator.textContent = `Current: ${hotelData.floors[currentFloor].name}`;
+            } else {
+                indicator.textContent = '';
+            }
+        }
+
+        // Floor plan management
+        function uploadFloorPlan() {
+            if (!currentFloor) {
+                alert('Please select a floor first');
+                return;
+            }
+            
+            const file = document.getElementById('floorPlanInput').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    hotelData.floors[currentFloor].floorPlanUrl = e.target.result;
+                    loadFloorPlan();
+                    saveData();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function loadFloorPlan() {
+            const container = document.getElementById('floorPlanContainer');
+            container.innerHTML = '';
+            
+            const floor = hotelData.floors[currentFloor];
+            if (!floor || !floor.floorPlanUrl) {
+                container.innerHTML = '<p class="text-gray-500 text-center p-8"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan for this floor</p>';
+                return;
+            }
+            
+            const img = document.createElement('img');
+            img.src = floor.floorPlanUrl;
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            img.onclick = handleFloorPlanClick;
+            container.appendChild(img);
+            
+            renderMarkers();
+            renderConnections();
+            updateMarkersList();
+            
+            console.log(`Loaded floor plan for ${floor.name}`);
+        }
+
+        function clearFloorPlan() {
+            const container = document.getElementById('floorPlanContainer');
+            container.innerHTML = '<p class="text-gray-500 text-center p-8"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan to get started</p>';
+            document.getElementById('markersList').innerHTML = '<p class="text-gray-400 text-sm">No markers yet</p>';
+        }
+
+        function clearMap() {
+            if (!currentFloor) {
+                alert('Please select a floor first');
+                return;
+            }
+            
+            if (confirm('Clear all markers and connections from this floor?')) {
+                hotelData.floors[currentFloor].floorPlanUrl = null;
+                hotelData.floors[currentFloor].markers = [];
+                hotelData.floors[currentFloor].connections = [];
+                loadFloorPlan();
+                saveData();
+            }
+        }
+
+        // Edit modes
+        function setMode(mode) {
+            editMode = mode;
+            connectionStart = null;
+            
+            // Update button states
+            document.querySelectorAll('.mode-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const modeText = {
+                'add': 'Click on floor plan to add marker',
+                'delete': 'Click on marker to delete it',
+                'connect': 'Click two markers to connect them',
+                'disconnect': 'Click two markers to disconnect them'
+            };
+            
+            document.getElementById('currentModeText').textContent = modeText[mode] || 'Select a mode';
+            
+            if (mode) {
+                document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            }
+            
+            // Reset any selected markers
+            document.querySelectorAll('.marker.selected').forEach(marker => {
+                marker.classList.remove('selected');
+            });
+        }
+
+        // Marker management
+        function handleFloorPlanClick(e) {
+            if (!editMode || !currentFloor || editMode !== 'add') return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            console.log(`Clicked at ${x}%, ${y}%`);
+            
+            tempMarkerPosition = { x, y };
+            document.getElementById('markerModal').classList.remove('hidden');
+        }
+
+        function selectIcon(icon) {
+            selectedIcon = icon;
+            document.querySelectorAll('.icon-btn').forEach(btn => {
+                btn.style.background = 'rgba(255, 255, 255, 0.1)';
+            });
+            event.target.style.background = 'rgba(79, 70, 229, 0.5)';
+        }
+
+        function createMarker() {
+            const name = document.getElementById('markerName').value.trim();
+            if (!name) {
+                alert('Please enter a marker name');
+                return;
+            }
+            
+            const marker = {
+                id: Date.now().toString(),
+                x: tempMarkerPosition.x,
+                y: tempMarkerPosition.y,
+                name: name,
+                icon: selectedIcon
+            };
+            
+            // Ensure markers array exists
+            if (!hotelData.floors[currentFloor].markers) {
+                hotelData.floors[currentFloor].markers = [];
+            }
+            
+            hotelData.floors[currentFloor].markers.push(marker);
+            closeMarkerModal();
+            loadFloorPlan();
+            saveData();
+            
+            console.log(`Created marker: ${name} at (${marker.x}, ${marker.y})`);
+        }
+
+        function closeMarkerModal(e) {
+            if (!e || e.target === e.currentTarget) {
+                document.getElementById('markerModal').classList.add('hidden');
+                document.getElementById('markerName').value = '';
+                selectedIcon = '🛏️';
+                document.querySelectorAll('.icon-btn').forEach(btn => {
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                });
+            }
+        }
+
+        function deleteMarker(markerId) {
+            const floor = hotelData.floors[currentFloor];
+            floor.markers = floor.markers.filter(m => m.id !== markerId);
+            floor.connections = floor.connections.filter(c => !c.includes(markerId));
+            loadFloorPlan();
+            saveData();
+        }
+
+        function handleMarkerClick(markerId, e) {
+            e.stopPropagation();
+            console.log(`Marker clicked: ${markerId}, mode: ${editMode}`);
+            
+            if (editMode === 'delete') {
+                if (confirm('Delete this marker?')) {
+                    deleteMarker(markerId);
+                }
+            } else if (editMode === 'connect' || editMode === 'disconnect') {
+                if (!connectionStart) {
+                    connectionStart = markerId;
+                    // Visual feedback for selected marker
+                    e.target.classList.add('selected');
+                    alert('Selected first marker. Click another marker to ' + editMode);
+                } else {
+                    if (connectionStart === markerId) {
+                        alert('Cannot connect a marker to itself. Click a different marker.');
+                        // Reset selection
+                        resetConnectionStart();
+                        return;
+                    }
+                    
+                    if (editMode === 'connect') {
+                        connectMarkers(connectionStart, markerId);
+                    } else {
+                        disconnectMarkers(connectionStart, markerId);
+                    }
+                    resetConnectionStart();
+                }
+            }
+        }
+
+        function resetConnectionStart() {
+            // Reset visual state of all markers
+            document.querySelectorAll('.marker.selected').forEach(marker => {
+                marker.classList.remove('selected');
+            });
+            connectionStart = null;
+        }
+
+        function connectMarkers(id1, id2) {
+            const floor = hotelData.floors[currentFloor];
+            
+            // Ensure connections array exists
+            if (!floor.connections) {
+                floor.connections = [];
+            }
+            
+            const exists = floor.connections.some(c => 
+                (c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1)
+            );
+            
+            if (exists) {
+                alert('These markers are already connected!');
+            } else {
+                floor.connections.push([id1, id2]);
+                console.log(`Connected markers: ${id1} - ${id2}`);
+                loadFloorPlan();
+                saveData();
+                alert('Markers connected successfully!');
+            }
+        }
+
+        function disconnectMarkers(id1, id2) {
+            const floor = hotelData.floors[currentFloor];
+            const originalLength = floor.connections ? floor.connections.length : 0;
+            
+            if (floor.connections) {
+                floor.connections = floor.connections.filter(c => 
+                    !((c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1))
+                );
+            }
+            
+            if (floor.connections.length < originalLength) {
+                loadFloorPlan();
+                saveData();
+                alert('Markers disconnected!');
+            } else {
+                alert('These markers were not connected.');
+            }
+        }
+
+        function renderMarkers() {
+            const container = document.getElementById('floorPlanContainer');
+            const floor = hotelData.floors[currentFloor];
+            
+            if (floor.markers && floor.markers.length > 0) {
+                floor.markers.forEach(marker => {
+                    const markerEl = document.createElement('div');
+                    markerEl.className = 'marker';
+                    markerEl.style.left = marker.x + '%';
+                    markerEl.style.top = marker.y + '%';
+                    markerEl.innerHTML = marker.icon;
+                    markerEl.title = marker.name;
+                    markerEl.onclick = (e) => handleMarkerClick(marker.id, e);
+                    container.appendChild(markerEl);
+                });
+                console.log(`Rendered ${floor.markers.length} markers`);
+            }
+        }
+
+        function renderConnections() {
+            const container = document.getElementById('floorPlanContainer');
+            const floor = hotelData.floors[currentFloor];
+            
+            if (floor.connections && floor.connections.length > 0) {
+                floor.connections.forEach(([id1, id2]) => {
+                    const marker1 = floor.markers?.find(m => m.id === id1);
+                    const marker2 = floor.markers?.find(m => m.id === id2);
+                    
+                    if (marker1 && marker2) {
+                        const line = document.createElement('div');
+                        line.className = 'connection-line';
+                        
+                        const dx = marker2.x - marker1.x;
+                        const dy = marker2.y - marker1.y;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        
+                        line.style.left = marker1.x + '%';
+                        line.style.top = marker1.y + '%';
+                        line.style.width = length + '%';
+                        line.style.transform = `rotate(${angle}deg)`;
+                        
+                        container.appendChild(line);
+                    }
+                });
+                console.log(`Rendered ${floor.connections.length} connections`);
+            }
+        }
+
+        function updateMarkersList() {
+            const list = document.getElementById('markersList');
+            const floor = hotelData.floors[currentFloor];
+            
+            if (!floor.markers || !floor.markers.length) {
+                list.innerHTML = '<p class="text-gray-400 text-sm">No markers yet</p>';
+                return;
+            }
+            
+            list.innerHTML = '';
+            floor.markers.forEach(marker => {
+                const item = document.createElement('div');
+                item.className = 'sidebar-item p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer';
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">${marker.icon}</span>
+                        <span class="text-white text-sm flex-1">${marker.name}</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Allow Enter key to login
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
