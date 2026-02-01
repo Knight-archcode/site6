@@ -50,21 +50,21 @@
             box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
         }
         
-        .marker.selected {
-            background: rgba(79, 70, 229, 0.7);
-            border-color: #ffffff;
-            transform: translate(-50%, -50%) scale(1.3);
-            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.8);
-        }
-        
         .connection-line {
             position: absolute;
-            height: 3px;
+            height: 4px;
             background: linear-gradient(90deg, #4f46e5, #7c3aed);
             transform-origin: 0 0;
             pointer-events: none;
             box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
             z-index: 5;
+        }
+        
+        .connection-line.temp {
+            background: linear-gradient(90deg, #f59e0b, #f97316);
+            height: 5px;
+            border: 1px dashed #fbbf24;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
         }
         
         .mode-button {
@@ -108,7 +108,6 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            min-height: 600px;
         }
         
         .sidebar-item {
@@ -120,13 +119,57 @@
             transform: translateX(4px);
         }
         
-        .icon-btn.selected {
-            background: rgba(79, 70, 229, 0.5) !important;
-            border-color: rgba(255, 255, 255, 0.5) !important;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            border-left: 4px solid;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left-color: #10b981;
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.info {
+            border-left-color: #3b82f6;
+        }
+        
+        .selected-marker {
+            border-color: #f59e0b !important;
+            border-width: 4px !important;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6) !important;
+            animation: pulse-selected 1.5s infinite;
+        }
+        
+        @keyframes pulse-selected {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1.15);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.25);
+            }
         }
     </style>
 </head>
 <body class="p-4">
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+    
     <!-- Login Screen -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center">
         <div class="login-container glass-panel rounded-2xl p-8 max-w-md w-full">
@@ -167,9 +210,14 @@
                         <p class="text-gray-300 text-sm mono">Admin Control Panel</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/30 transition-all">
-                    Logout
-                </button>
+                <div class="flex gap-3">
+                    <a href="index.html" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white rounded-lg border border-purple-500/30 transition-all font-semibold">
+                        View Guest Site
+                    </a>
+                    <button onclick="logout()" class="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg border border-red-500/30 transition-all">
+                        Logout
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -231,6 +279,9 @@
                         <button onclick="setMode('disconnect')" id="modeDisconnect" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
                             🔓 Disconnect
                         </button>
+                        <button onclick="setMode(null)" id="modeNone" class="mode-button w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold border border-white/20 transition-all">
+                            ✋ Cancel Mode
+                        </button>
                     </div>
                 </div>
 
@@ -245,14 +296,21 @@
                     </div>
                 </div>
 
+                <!-- Connection Info -->
+                <div id="connectionInfo" class="glass-panel rounded-2xl p-6 hidden">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <span>🔗</span> Connection
+                    </h2>
+                    <p class="text-gray-300 text-sm mb-2">Selected Marker:</p>
+                    <p id="selectedMarkerName" class="text-white font-semibold mb-4">None</p>
+                    <button onclick="cancelConnection()" class="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">
+                        Cancel Connection
+                    </button>
+                </div>
+
                 <!-- Save Button -->
                 <button onclick="saveData()" class="w-full btn-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg">
                     💾 Save Changes
-                </button>
-                
-                <!-- Debug Button -->
-                <button onclick="debugData()" class="w-full px-4 py-2 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 rounded-lg text-sm border border-gray-500/30 transition-all mt-2">
-                    🐛 Debug Data
                 </button>
             </div>
 
@@ -262,16 +320,28 @@
                     <div class="mb-4 flex justify-between items-center">
                         <div>
                             <h2 class="text-2xl font-bold text-white">Floor Plan Editor</h2>
-                            <p class="text-gray-300 text-sm mono" id="currentModeText">Select a floor to begin</p>
+                            <p class="text-gray-300 text-sm mono" id="currentModeText">Select a floor and editing mode</p>
+                            <p class="text-gray-400 text-xs mono mt-1" id="connectionHint"></p>
                         </div>
                         <div class="text-gray-300 text-sm mono" id="floorIndicator"></div>
                     </div>
                     
-                    <div id="floorPlanContainer" class="floor-plan-container relative bg-gray-800 flex items-center justify-center">
-                        <p class="text-gray-500 text-center p-8">
+                    <div id="floorPlanContainer" class="floor-plan-container relative bg-gray-800 min-h-[600px] flex items-center justify-center">
+                        <p class="text-gray-500 text-center">
                             <span class="text-4xl block mb-2">🗺️</span>
-                            Upload a floor plan to get started
+                            Select a floor and upload a floor plan to get started
                         </p>
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div class="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <p class="text-gray-300 font-semibold">Current Floor</p>
+                            <p id="currentFloorStats" class="text-white">No floor selected</p>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <p class="text-gray-300 font-semibold">Markers & Connections</p>
+                            <p id="markerStats" class="text-white">0 markers, 0 connections</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -316,112 +386,63 @@
     </div>
 
     <script>
-        // Initialize data structure
-        let hotelData = { floors: {} };
+        let hotelData = {
+            floors: {}
+        };
         let currentFloor = null;
         let editMode = null;
         let tempMarkerPosition = null;
         let selectedIcon = '🛏️';
         let connectionStart = null;
+        let connectionStartMarker = null;
 
         // Load data from localStorage
         function loadData() {
-            console.log('Admin: Loading data from localStorage...');
             const saved = localStorage.getItem('hotelHopperData');
-            
             if (saved) {
                 try {
                     hotelData = JSON.parse(saved);
-                    console.log('Admin: Successfully loaded data:', hotelData);
-                    
-                    // Ensure proper data structure
-                    if (!hotelData.floors) {
-                        hotelData.floors = {};
-                        console.warn('Admin: Fixed missing floors object');
-                    }
-                    
-                    // Ensure each floor has required arrays
-                    Object.keys(hotelData.floors).forEach(floorNum => {
-                        const floor = hotelData.floors[floorNum];
-                        if (!floor.markers) floor.markers = [];
-                        if (!floor.connections) floor.connections = [];
-                    });
+                    updateStats();
                 } catch (e) {
-                    console.error('Admin: Error parsing saved data:', e);
-                    hotelData = { floors: {} };
+                    console.error('Error loading data:', e);
+                    showNotification('Error loading saved data', 'error');
                 }
-            } else {
-                console.log('Admin: No data found, starting fresh');
-                hotelData = { floors: {} };
             }
-            
             updateFloorSelector();
         }
 
         // Save data to localStorage
         function saveData() {
             try {
-                console.log('Admin: Saving data to localStorage...', hotelData);
-                
-                // Ensure all floors have required properties
-                Object.keys(hotelData.floors).forEach(floorNum => {
-                    const floor = hotelData.floors[floorNum];
-                    if (!floor.markers) floor.markers = [];
-                    if (!floor.connections) floor.connections = [];
-                    if (!floor.name) floor.name = `Floor ${floorNum}`;
-                });
-                
-                // Save to localStorage
                 localStorage.setItem('hotelHopperData', JSON.stringify(hotelData));
                 
-                // Verify save was successful
-                const verify = localStorage.getItem('hotelHopperData');
-                if (verify) {
-                    console.log('Admin: Save verified successfully');
-                }
+                // Trigger storage event to sync across tabs
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'hotelHopperData',
+                    newValue: JSON.stringify(hotelData),
+                    oldValue: localStorage.getItem('hotelHopperData')
+                }));
                 
-                // Show success message
-                const floorCount = Object.keys(hotelData.floors).length;
-                const totalMarkers = Object.values(hotelData.floors).reduce((sum, floor) => sum + (floor.markers?.length || 0), 0);
-                const totalConnections = Object.values(hotelData.floors).reduce((sum, floor) => sum + (floor.connections?.length || 0), 0);
-                
-                alert(`✅ Changes saved successfully!\nFloors: ${floorCount}\nMarkers: ${totalMarkers}\nConnections: ${totalConnections}`);
-                
-            } catch (error) {
-                console.error('Admin: Error saving data:', error);
-                alert('❌ Error saving data. Check console for details.');
+                showNotification('✅ Changes saved successfully!', 'success');
+                updateStats();
+            } catch (e) {
+                console.error('Error saving data:', e);
+                showNotification('Error saving data', 'error');
             }
         }
 
-        // Debug function to check data
-        function debugData() {
-            console.log('=== DEBUG DATA ===');
-            console.log('Current hotelData:', hotelData);
-            
-            const saved = localStorage.getItem('hotelHopperData');
-            console.log('LocalStorage data:', saved);
-            
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    const floorCount = Object.keys(parsed.floors || {}).length;
-                    const totalMarkers = Object.values(parsed.floors || {}).reduce((sum, floor) => sum + (floor.markers?.length || 0), 0);
-                    const totalConnections = Object.values(parsed.floors || {}).reduce((sum, floor) => sum + (floor.connections?.length || 0), 0);
-                    
-                    alert(`Data Status:\n- ${floorCount} floor(s)\n- ${totalMarkers} marker(s)\n- ${totalConnections} connection(s)\nCheck console for full details`);
-                } catch(e) {
-                    alert('Data corrupted in localStorage');
-                }
-            } else {
-                alert('No data in localStorage');
-            }
-            
-            // Also check current floor data
-            if (currentFloor) {
+        // Update statistics
+        function updateStats() {
+            if (currentFloor && hotelData.floors[currentFloor]) {
                 const floor = hotelData.floors[currentFloor];
-                console.log(`Current floor (${currentFloor}):`, floor);
-                console.log(`Markers:`, floor.markers);
-                console.log(`Connections:`, floor.connections);
+                const markerCount = floor.markers.length;
+                const connectionCount = floor.connections.length;
+                
+                document.getElementById('currentFloorStats').textContent = floor.name;
+                document.getElementById('markerStats').textContent = `${markerCount} markers, ${connectionCount} connections`;
+            } else {
+                document.getElementById('currentFloorStats').textContent = 'No floor selected';
+                document.getElementById('markerStats').textContent = '0 markers, 0 connections';
             }
         }
 
@@ -435,10 +456,12 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
                 loadData();
+                showNotification('Admin login successful!', 'success');
             } else {
                 const errorDiv = document.getElementById('loginError');
                 errorDiv.textContent = 'Invalid credentials';
                 errorDiv.classList.remove('hidden');
+                showNotification('Invalid login credentials', 'error');
             }
         }
 
@@ -448,11 +471,11 @@
             document.getElementById('adminPanel').classList.add('hidden');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            showNotification('Logged out successfully', 'info');
         }
 
         // Check session on load
         window.onload = function() {
-            console.log('Admin page loaded');
             if (sessionStorage.getItem('adminLoggedIn') === 'true') {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
@@ -464,16 +487,11 @@
         function addFloor() {
             const name = document.getElementById('newFloorName').value.trim();
             if (!name) {
-                alert('Please enter a floor name');
+                showNotification('Please enter a floor name', 'error');
                 return;
             }
             
-            // Find next available floor number
-            let floorNum = 1;
-            while (hotelData.floors[floorNum]) {
-                floorNum++;
-            }
-            
+            const floorNum = Object.keys(hotelData.floors).length + 1;
             hotelData.floors[floorNum] = {
                 name: name,
                 floorNumber: floorNum.toString(),
@@ -484,41 +502,41 @@
             
             document.getElementById('newFloorName').value = '';
             updateFloorSelector();
-            
-            // Select the new floor
-            document.getElementById('floorSelector').value = floorNum;
-            switchFloor();
-            
             saveData();
+            showNotification(`Floor "${name}" added successfully!`, 'success');
         }
 
         function deleteFloor() {
             if (!currentFloor) {
-                alert('Please select a floor to delete');
+                showNotification('Please select a floor to delete', 'error');
                 return;
             }
             
-            if (confirm(`Delete ${hotelData.floors[currentFloor].name}?`)) {
+            const floorName = hotelData.floors[currentFloor].name;
+            if (confirm(`Delete "${floorName}" and all its markers/connections?`)) {
                 delete hotelData.floors[currentFloor];
                 currentFloor = null;
                 updateFloorSelector();
                 clearFloorPlan();
                 saveData();
+                showNotification(`Floor "${floorName}" deleted`, 'success');
             }
         }
 
         function renameFloor() {
             if (!currentFloor) {
-                alert('Please select a floor to rename');
+                showNotification('Please select a floor to rename', 'error');
                 return;
             }
             
-            const newName = prompt('Enter new floor name:', hotelData.floors[currentFloor].name);
+            const oldName = hotelData.floors[currentFloor].name;
+            const newName = prompt('Enter new floor name:', oldName);
             if (newName && newName.trim()) {
                 hotelData.floors[currentFloor].name = newName.trim();
                 updateFloorSelector();
                 updateFloorIndicator();
                 saveData();
+                showNotification(`Floor renamed to "${newName}"`, 'success');
             }
         }
 
@@ -526,17 +544,12 @@
             const selector = document.getElementById('floorSelector');
             selector.innerHTML = '<option value="">Select Floor</option>';
             
-            // Sort floors by number
-            const floorNumbers = Object.keys(hotelData.floors).map(Number).sort((a, b) => a - b);
-            
-            floorNumbers.forEach(floorNum => {
+            Object.keys(hotelData.floors).forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
-                if (floor) {
-                    const option = document.createElement('option');
-                    option.value = floorNum;
-                    option.textContent = floor.name;
-                    selector.appendChild(option);
-                }
+                const option = document.createElement('option');
+                option.value = floorNum;
+                option.textContent = floor.name;
+                selector.appendChild(option);
             });
             
             if (currentFloor) {
@@ -551,14 +564,16 @@
             if (currentFloor) {
                 loadFloorPlan();
                 updateFloorIndicator();
+                updateStats();
             } else {
                 clearFloorPlan();
+                updateStats();
             }
         }
 
         function updateFloorIndicator() {
             const indicator = document.getElementById('floorIndicator');
-            if (currentFloor && hotelData.floors[currentFloor]) {
+            if (currentFloor) {
                 indicator.textContent = `Current: ${hotelData.floors[currentFloor].name}`;
             } else {
                 indicator.textContent = '';
@@ -568,17 +583,27 @@
         // Floor plan management
         function uploadFloorPlan() {
             if (!currentFloor) {
-                alert('Please select a floor first');
+                showNotification('Please select a floor first', 'error');
                 return;
             }
             
             const file = document.getElementById('floorPlanInput').files[0];
             if (file) {
+                // Check file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('File size too large (max 5MB)', 'error');
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     hotelData.floors[currentFloor].floorPlanUrl = e.target.result;
                     loadFloorPlan();
                     saveData();
+                    showNotification('Floor plan uploaded successfully!', 'success');
+                };
+                reader.onerror = function() {
+                    showNotification('Error reading file', 'error');
                 };
                 reader.readAsDataURL(file);
             }
@@ -589,8 +614,8 @@
             container.innerHTML = '';
             
             const floor = hotelData.floors[currentFloor];
-            if (!floor || !floor.floorPlanUrl) {
-                container.innerHTML = '<p class="text-gray-500 text-center p-8"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan for this floor</p>';
+            if (!floor.floorPlanUrl) {
+                container.innerHTML = '<p class="text-gray-500 text-center"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan for this floor</p>';
                 return;
             }
             
@@ -605,28 +630,27 @@
             renderMarkers();
             renderConnections();
             updateMarkersList();
-            
-            console.log(`Loaded floor plan for ${floor.name}`);
         }
 
         function clearFloorPlan() {
             const container = document.getElementById('floorPlanContainer');
-            container.innerHTML = '<p class="text-gray-500 text-center p-8"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan to get started</p>';
+            container.innerHTML = '<p class="text-gray-500 text-center"><span class="text-4xl block mb-2">🗺️</span>Select a floor and upload a floor plan</p>';
             document.getElementById('markersList').innerHTML = '<p class="text-gray-400 text-sm">No markers yet</p>';
+            document.getElementById('connectionInfo').classList.add('hidden');
         }
 
         function clearMap() {
             if (!currentFloor) {
-                alert('Please select a floor first');
+                showNotification('Please select a floor first', 'error');
                 return;
             }
             
             if (confirm('Clear all markers and connections from this floor?')) {
-                hotelData.floors[currentFloor].floorPlanUrl = null;
                 hotelData.floors[currentFloor].markers = [];
                 hotelData.floors[currentFloor].connections = [];
                 loadFloorPlan();
                 saveData();
+                showNotification('Map cleared successfully', 'success');
             }
         }
 
@@ -634,6 +658,18 @@
         function setMode(mode) {
             editMode = mode;
             connectionStart = null;
+            connectionStartMarker = null;
+            
+            // Clear any temporary lines
+            const tempLines = document.querySelectorAll('.connection-line.temp');
+            tempLines.forEach(line => line.remove());
+            
+            // Clear selected marker styling
+            const markers = document.querySelectorAll('.marker.selected');
+            markers.forEach(marker => {
+                marker.classList.remove('selected');
+                marker.classList.remove('selected-marker');
+            });
             
             // Update button states
             document.querySelectorAll('.mode-button').forEach(btn => {
@@ -643,53 +679,62 @@
             const modeText = {
                 'add': 'Click on floor plan to add marker',
                 'delete': 'Click on marker to delete it',
-                'connect': 'Click two markers to connect them',
-                'disconnect': 'Click two markers to disconnect them'
+                'connect': 'Click first marker to connect, then click second marker',
+                'disconnect': 'Click first marker to disconnect, then click second marker',
+                null: 'No active mode - select a mode above'
+            };
+            
+            const hintText = {
+                'connect': 'First marker selected. Now click second marker to create connection.',
+                'disconnect': 'First marker selected. Now click second marker to remove connection.'
             };
             
             document.getElementById('currentModeText').textContent = modeText[mode] || 'Select a mode';
+            document.getElementById('connectionHint').textContent = hintText[mode] || '';
+            
+            // Show/hide connection info
+            const connectionInfo = document.getElementById('connectionInfo');
+            if (mode === 'connect' || mode === 'disconnect') {
+                connectionInfo.classList.remove('hidden');
+                document.getElementById('selectedMarkerName').textContent = 'None';
+            } else {
+                connectionInfo.classList.add('hidden');
+            }
             
             if (mode) {
                 document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            } else {
+                document.getElementById('modeNone').classList.add('active');
             }
-            
-            // Reset any selected markers
-            document.querySelectorAll('.marker.selected').forEach(marker => {
-                marker.classList.remove('selected');
-            });
         }
 
         // Marker management
         function handleFloorPlanClick(e) {
-            if (!editMode || !currentFloor || editMode !== 'add') return;
+            if (!editMode || !currentFloor) return;
             
-            const rect = e.target.getBoundingClientRect();
+            const img = e.target;
+            const rect = img.getBoundingClientRect();
             const x = ((e.clientX - rect.left) / rect.width) * 100;
             const y = ((e.clientY - rect.top) / rect.height) * 100;
             
-            console.log(`Clicked at ${x}%, ${y}%`);
-            
-            tempMarkerPosition = { x, y };
-            document.getElementById('markerModal').classList.remove('hidden');
+            if (editMode === 'add') {
+                tempMarkerPosition = { x, y };
+                document.getElementById('markerModal').classList.remove('hidden');
+            }
         }
 
         function selectIcon(icon) {
             selectedIcon = icon;
             document.querySelectorAll('.icon-btn').forEach(btn => {
-                btn.classList.remove('selected');
+                btn.style.background = 'rgba(255, 255, 255, 0.1)';
             });
-            event.target.classList.add('selected');
+            event.target.style.background = 'rgba(79, 70, 229, 0.5)';
         }
 
         function createMarker() {
             const name = document.getElementById('markerName').value.trim();
             if (!name) {
-                alert('Please enter a marker name');
-                return;
-            }
-            
-            if (!tempMarkerPosition) {
-                alert('No position selected. Please click on the floor plan to select a position.');
+                showNotification('Please enter a marker name', 'error');
                 return;
             }
             
@@ -701,25 +746,11 @@
                 icon: selectedIcon
             };
             
-            // Ensure markers array exists
-            if (!hotelData.floors[currentFloor]) {
-                hotelData.floors[currentFloor] = {
-                    name: `Floor ${currentFloor}`,
-                    markers: [],
-                    connections: []
-                };
-            }
-            
-            if (!hotelData.floors[currentFloor].markers) {
-                hotelData.floors[currentFloor].markers = [];
-            }
-            
             hotelData.floors[currentFloor].markers.push(marker);
             closeMarkerModal();
             loadFloorPlan();
             saveData();
-            
-            console.log(`Created marker: ${name} at (${marker.x}, ${marker.y})`);
+            showNotification(`Marker "${name}" created successfully!`, 'success');
         }
 
         function closeMarkerModal(e) {
@@ -728,43 +759,56 @@
                 document.getElementById('markerName').value = '';
                 selectedIcon = '🛏️';
                 document.querySelectorAll('.icon-btn').forEach(btn => {
-                    btn.classList.remove('selected');
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
                 });
-                document.querySelector('.icon-btn').classList.add('selected');
             }
         }
 
         function deleteMarker(markerId) {
             const floor = hotelData.floors[currentFloor];
-            if (!floor) return;
+            const marker = floor.markers.find(m => m.id === markerId);
             
-            floor.markers = floor.markers.filter(m => m.id !== markerId);
-            if (floor.connections) {
+            if (confirm(`Delete marker "${marker.name}"?`)) {
+                floor.markers = floor.markers.filter(m => m.id !== markerId);
                 floor.connections = floor.connections.filter(c => !c.includes(markerId));
+                loadFloorPlan();
+                saveData();
+                showNotification(`Marker "${marker.name}" deleted`, 'success');
             }
-            loadFloorPlan();
-            saveData();
         }
 
         function handleMarkerClick(markerId, e) {
             e.stopPropagation();
-            console.log(`Marker clicked: ${markerId}, mode: ${editMode}`);
             
             if (editMode === 'delete') {
-                if (confirm('Delete this marker?')) {
-                    deleteMarker(markerId);
-                }
+                deleteMarker(markerId);
             } else if (editMode === 'connect' || editMode === 'disconnect') {
+                const floor = hotelData.floors[currentFloor];
+                const marker = floor.markers.find(m => m.id === markerId);
+                
                 if (!connectionStart) {
+                    // First marker selection
                     connectionStart = markerId;
-                    // Visual feedback for selected marker
+                    connectionStartMarker = marker;
+                    
+                    // Highlight selected marker
+                    const markers = document.querySelectorAll('.marker');
+                    markers.forEach(m => {
+                        m.classList.remove('selected');
+                        m.classList.remove('selected-marker');
+                    });
                     e.target.classList.add('selected');
-                    alert('Selected first marker. Click another marker to ' + editMode);
+                    e.target.classList.add('selected-marker');
+                    
+                    document.getElementById('selectedMarkerName').textContent = `${marker.icon} ${marker.name}`;
+                    document.getElementById('connectionHint').textContent = editMode === 'connect' 
+                        ? `Selected: ${marker.name}. Now click second marker to connect.`
+                        : `Selected: ${marker.name}. Now click second marker to disconnect.`;
+                    
                 } else {
-                    if (connectionStart === markerId) {
-                        alert('Cannot connect a marker to itself. Click a different marker.');
-                        // Reset selection
-                        resetConnectionStart();
+                    // Second marker selection - complete connection
+                    if (markerId === connectionStart) {
+                        showNotification('Cannot connect a marker to itself', 'error');
                         return;
                     }
                     
@@ -773,116 +817,153 @@
                     } else {
                         disconnectMarkers(connectionStart, markerId);
                     }
-                    resetConnectionStart();
+                    
+                    // Reset connection state
+                    connectionStart = null;
+                    connectionStartMarker = null;
+                    document.getElementById('selectedMarkerName').textContent = 'None';
+                    document.getElementById('connectionHint').textContent = '';
+                    
+                    // Clear selected styling
+                    const markers = document.querySelectorAll('.marker');
+                    markers.forEach(m => {
+                        m.classList.remove('selected');
+                        m.classList.remove('selected-marker');
+                    });
                 }
             }
         }
 
-        function resetConnectionStart() {
-            // Reset visual state of all markers
-            document.querySelectorAll('.marker.selected').forEach(marker => {
-                marker.classList.remove('selected');
-            });
-            connectionStart = null;
-        }
-
         function connectMarkers(id1, id2) {
             const floor = hotelData.floors[currentFloor];
-            if (!floor) return;
-            
-            // Ensure connections array exists
-            if (!floor.connections) {
-                floor.connections = [];
-            }
-            
             const exists = floor.connections.some(c => 
                 (c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1)
             );
             
             if (exists) {
-                alert('These markers are already connected!');
-            } else {
-                floor.connections.push([id1, id2]);
-                console.log(`Connected markers: ${id1} - ${id2}`);
-                loadFloorPlan();
-                saveData();
-                alert('Markers connected successfully!');
+                showNotification('Markers are already connected', 'info');
+                return;
             }
+            
+            floor.connections.push([id1, id2]);
+            loadFloorPlan();
+            saveData();
+            
+            const marker1 = floor.markers.find(m => m.id === id1);
+            const marker2 = floor.markers.find(m => m.id === id2);
+            showNotification(`Connected ${marker1.name} to ${marker2.name}`, 'success');
         }
 
         function disconnectMarkers(id1, id2) {
             const floor = hotelData.floors[currentFloor];
-            if (!floor || !floor.connections) return;
-            
-            const originalLength = floor.connections.length;
+            const initialLength = floor.connections.length;
             
             floor.connections = floor.connections.filter(c => 
                 !((c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1))
             );
             
-            if (floor.connections.length < originalLength) {
+            if (floor.connections.length < initialLength) {
                 loadFloorPlan();
                 saveData();
-                alert('Markers disconnected!');
+                
+                const marker1 = floor.markers.find(m => m.id === id1);
+                const marker2 = floor.markers.find(m => m.id === id2);
+                showNotification(`Disconnected ${marker1.name} from ${marker2.name}`, 'success');
             } else {
-                alert('These markers were not connected.');
+                showNotification('These markers are not connected', 'error');
             }
+        }
+
+        function cancelConnection() {
+            connectionStart = null;
+            connectionStartMarker = null;
+            
+            // Clear selected styling
+            const markers = document.querySelectorAll('.marker');
+            markers.forEach(m => {
+                m.classList.remove('selected');
+                m.classList.remove('selected-marker');
+            });
+            
+            document.getElementById('selectedMarkerName').textContent = 'None';
+            document.getElementById('connectionHint').textContent = '';
+            setMode(editMode); // Reset mode
         }
 
         function renderMarkers() {
             const container = document.getElementById('floorPlanContainer');
+            const img = container.querySelector('img');
+            if (!img) return;
+            
             const floor = hotelData.floors[currentFloor];
             
-            if (floor && floor.markers && floor.markers.length > 0) {
-                floor.markers.forEach(marker => {
-                    const markerEl = document.createElement('div');
-                    markerEl.className = 'marker';
-                    markerEl.style.left = marker.x + '%';
-                    markerEl.style.top = marker.y + '%';
-                    markerEl.innerHTML = marker.icon;
-                    markerEl.title = marker.name;
-                    markerEl.onclick = (e) => handleMarkerClick(marker.id, e);
-                    container.appendChild(markerEl);
-                });
-                console.log(`Rendered ${floor.markers.length} markers`);
-            }
+            // Clear existing markers
+            const existingMarkers = container.querySelectorAll('.marker');
+            existingMarkers.forEach(marker => marker.remove());
+            
+            floor.markers.forEach(marker => {
+                const markerEl = document.createElement('div');
+                markerEl.className = 'marker';
+                markerEl.style.left = marker.x + '%';
+                markerEl.style.top = marker.y + '%';
+                markerEl.innerHTML = marker.icon;
+                markerEl.title = marker.name;
+                markerEl.onclick = (e) => handleMarkerClick(marker.id, e);
+                container.appendChild(markerEl);
+            });
         }
 
         function renderConnections() {
             const container = document.getElementById('floorPlanContainer');
+            const img = container.querySelector('img');
+            if (!img) return;
+            
             const floor = hotelData.floors[currentFloor];
             
-            if (floor && floor.connections && floor.connections.length > 0) {
-                floor.connections.forEach(([id1, id2]) => {
-                    const marker1 = floor.markers?.find(m => m.id === id1);
-                    const marker2 = floor.markers?.find(m => m.id === id2);
-                    
-                    if (marker1 && marker2) {
-                        const line = document.createElement('div');
-                        line.className = 'connection-line';
-                        
-                        const dx = marker2.x - marker1.x;
-                        const dy = marker2.y - marker1.y;
-                        const length = Math.sqrt(dx * dx + dy * dy);
-                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                        
-                        line.style.left = marker1.x + '%';
-                        line.style.top = marker1.y + '%';
-                        line.style.width = length + '%';
-                        line.style.transform = `rotate(${angle}deg)`;
-                        
-                        container.appendChild(line);
-                    }
-                });
-                console.log(`Rendered ${floor.connections.length} connections`);
-            }
+            // Clear existing connections
+            const existingLines = container.querySelectorAll('.connection-line:not(.temp)');
+            existingLines.forEach(line => line.remove());
+            
+            floor.connections.forEach(([id1, id2]) => {
+                const marker1 = floor.markers.find(m => m.id === id1);
+                const marker2 = floor.markers.find(m => m.id === id2);
+                
+                if (marker1 && marker2) {
+                    drawLine(container, marker1, marker2);
+                }
+            });
+        }
+
+        function drawLine(container, marker1, marker2, isTemp = false) {
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            if (isTemp) line.classList.add('temp');
+            
+            // Calculate positions
+            const x1 = marker1.x;
+            const y1 = marker1.y;
+            const x2 = marker2.x;
+            const y2 = marker2.y;
+            
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            // Position line at center of marker1
+            line.style.left = x1 + '%';
+            line.style.top = y1 + '%';
+            line.style.width = length + '%';
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            container.appendChild(line);
         }
 
         function updateMarkersList() {
             const list = document.getElementById('markersList');
             const floor = hotelData.floors[currentFloor];
             
-            if (!floor || !floor.markers || !floor.markers.length) {
+            if (!floor.markers.length) {
                 list.innerHTML = '<p class="text-gray-400 text-sm">No markers yet</p>';
                 return;
             }
@@ -891,14 +972,56 @@
             floor.markers.forEach(marker => {
                 const item = document.createElement('div');
                 item.className = 'sidebar-item p-3 rounded-lg bg-white/5 border border-white/10 cursor-pointer';
+                item.onclick = () => {
+                    // Center view on marker
+                    const container = document.getElementById('floorPlanContainer');
+                    container.scrollTo({
+                        top: (marker.y / 100 * container.scrollHeight) - container.clientHeight / 2,
+                        left: (marker.x / 100 * container.scrollWidth) - container.clientWidth / 2,
+                        behavior: 'smooth'
+                    });
+                };
                 item.innerHTML = `
                     <div class="flex items-center gap-2">
                         <span class="text-2xl">${marker.icon}</span>
-                        <span class="text-white text-sm flex-1">${marker.name}</span>
+                        <div class="flex-1">
+                            <span class="text-white text-sm block">${marker.name}</span>
+                            <span class="text-gray-400 text-xs">Position: ${marker.x.toFixed(1)}%, ${marker.y.toFixed(1)}%</span>
+                        </div>
                     </div>
                 `;
                 list.appendChild(item);
             });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                    <span class="text-gray-800 font-medium">${message}</span>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 5000);
         }
 
         // Allow Enter key to login
