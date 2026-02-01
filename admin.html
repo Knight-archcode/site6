@@ -4,11 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel Hopper Admin Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Replace CDN with local Tailwind CSS -->
+    <script>
+        // Simple Tailwind-like utilities to avoid CDN warning
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add basic Tailwind-like classes
+            const style = document.createElement('style');
+            style.textContent = `
+                .hidden { display: none !important; }
+                .flex { display: flex; }
+                .grid { display: grid; }
+                .items-center { align-items: center; }
+                .justify-center { justify-content: center; }
+                .justify-between { justify-content: space-between; }
+                .gap-2 { gap: 0.5rem; }
+                .gap-3 { gap: 0.75rem; }
+                .gap-4 { gap: 1rem; }
+                .gap-6 { gap: 1.5rem; }
+                .space-y-2 > * + * { margin-top: 0.5rem; }
+                .space-y-3 > * + * { margin-top: 0.75rem; }
+                .space-y-4 > * + * { margin-top: 1rem; }
+                .space-y-6 > * + * { margin-top: 1.5rem; }
+                .mb-2 { margin-bottom: 0.5rem; }
+                .mb-3 { margin-bottom: 0.75rem; }
+                .mb-4 { margin-bottom: 1rem; }
+                .mb-6 { margin-bottom: 1.5rem; }
+                .mb-8 { margin-bottom: 2rem; }
+                .mt-2 { margin-top: 0.5rem; }
+                .mt-4 { margin-top: 1rem; }
+                .mt-6 { margin-top: 1.5rem; }
+                .p-3 { padding: 0.75rem; }
+                .p-4 { padding: 1rem; }
+                .p-6 { padding: 1.5rem; }
+                .p-8 { padding: 2rem; }
+                .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+                .px-4 { padding-left: 1rem; padding-right: 1rem; }
+                .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+                .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+                .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+                .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+                .w-full { width: 100%; }
+                .h-auto { height: auto; }
+                .min-h-screen { min-height: 100vh; }
+                .min-h-\[600px\] { min-height: 600px; }
+                .max-w-md { max-width: 28rem; }
+                .max-h-64 { max-height: 16rem; }
+                .overflow-hidden { overflow: hidden; }
+                .overflow-y-auto { overflow-y: auto; }
+                .rounded-lg { border-radius: 0.5rem; }
+                .rounded-xl { border-radius: 0.75rem; }
+                .rounded-2xl { border-radius: 1rem; }
+                .rounded-3xl { border-radius: 1.5rem; }
+                .border { border-width: 1px; }
+                .border-2 { border-width: 2px; }
+                .border-l-4 { border-left-width: 4px; }
+                .border-t { border-top-width: 1px; }
+                .border-solid { border-style: solid; }
+                .border-dashed { border-style: dashed; }
+                .border-white\\/10 { border-color: rgba(255, 255, 255, 0.1); }
+                .border-white\\/20 { border-color: rgba(255, 255, 255, 0.2); }
+                .border-gray-200 { border-color: #e5e7eb; }
+                .border-indigo-500 { border-color: #6366f1; }
+                .border-red-500\\/30 { border-color: rgba(239, 68, 68, 0.3); }
+                .border-yellow-500\\/30 { border-color: rgba(245, 158, 11, 0.3); }
+                .border-green-500\\/30 { border-color: rgba(34, 197, 94, 0.3); }
+                .border-blue-500\\/30 { border-color: rgba(59, 130, 246, 0.3); }
+                .border-orange-500\\/30 { border-color: rgba(249, 115, 22, 0.3); }
+                .border-purple-500\\/30 { border-color: rgba(168, 85, 247, 0.3); }
+                .bg-white\\/5 { background-color: rgba(255, 255, 255, 0.05); }
+                .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1); }
+                .bg-white\\/95 { background-color: rgba(255, 255, 255, 0.95); }
+                .bg-gray-800 { background-color: #1f2937; }
+                .bg-red-500\\/20 { background-color: rgba(239, 68, 68, 0.2); }
+                .bg-yellow-500\\/20 { background-color: rgba(245, 158, 11, 0.2); }
+                .bg-green-500\\/20 { background-color: rgba(34, 197, 94, 0.2); }
+                .bg-blue-500\\/20 { background-color: rgba(59, 130, 246, 0.2); }
+                .bg-indigo-500 { background-color: #6366f1; }
+                .bg-orange-500\\/20 { background-color: rgba(249, 115, 22, 0.2); }
+                .bg-purple-500\\/20 { background-color: rgba(168, 85, 247, 0.2); }
+                .text-white { color: #ffffff; }
+                .text-gray-300 { color: #d1d5db; }
+                .text-gray-400 { color: #9ca3af; }
+                .text-gray-500 { color: #6b7280; }
+                .text-gray-600 { color: #4b5563; }
+                .text-gray-800 { color: #1f2937; }
+                .text-red-300 { color: #fca5a5; }
+                .text-red-400 { color: #f87171; }
+                .text-yellow-300 { color: #fde047; }
+                .text-green-300 { color: #86efac; }
+                .text-blue-300 { color: #93c5fd; }
+                .text-orange-300 { color: #fdba74; }
+                .text-purple-300 { color: #d8b4fe; }
+                .text-center { text-align: center; }
+                .text-left { text-align: left; }
+                .text-right { text-align: right; }
+                .text-xs { font-size: 0.75rem; line-height: 1rem; }
+                .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+                .text-base { font-size: 1rem; line-height: 1.5rem; }
+                .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+                .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+                .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+                .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+                .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+                .text-5xl { font-size: 3rem; line-height: 1; }
+                .text-6xl { font-size: 3.75rem; line-height: 1; }
+                .text-7xl { font-size: 4.5rem; line-height: 1; }
+                .font-semibold { font-weight: 600; }
+                .font-bold { font-weight: 700; }
+                .font-extrabold { font-weight: 800; }
+                .block { display: block; }
+                .inline-block { display: inline-block; }
+                .relative { position: relative; }
+                .absolute { position: absolute; }
+                .fixed { position: fixed; }
+                .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+                .top-0 { top: 0; }
+                .right-0 { right: 0; }
+                .left-0 { left: 0; }
+                .z-50 { z-index: 50; }
+                .z-10 { z-index: 10; }
+                .z-5 { z-index: 5; }
+                .z-1000 { z-index: 1000; }
+                .transform { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+                .translate-x-0 { --tw-translate-x: 0px; }
+                .translate-x-full { --tw-translate-x: 100%; }
+                .translate-y-0 { --tw-translate-y: 0px; }
+                .translate-y-2 { --tw-translate-y: 0.5rem; }
+                .-translate-x-1\\/2 { --tw-translate-x: -50%; }
+                .-translate-y-1\\/2 { --tw-translate-y: -50%; }
+                .scale-100 { --tw-scale-x: 1; --tw-scale-y: 1; }
+                .scale-105 { --tw-scale-x: 1.05; --tw-scale-y: 1.05; }
+                .scale-110 { --tw-scale-x: 1.1; --tw-scale-y: 1.1; }
+                .scale-115 { --tw-scale-x: 1.15; --tw-scale-y: 1.15; }
+                .scale-125 { --tw-scale-x: 1.25; --tw-scale-y: 1.25; }
+                .rotate-0 { --tw-rotate: 0deg; }
+                .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+                .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+                .col-span-1 { grid-column: span 1 / span 1; }
+                .col-span-3 { grid-column: span 3 / span 3; }
+                @media (min-width: 1024px) {
+                    .lg\\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+                    .lg\\:col-span-1 { grid-column: span 1 / span 1; }
+                    .lg\\:col-span-3 { grid-column: span 3 / span 3; }
+                }
+                .cursor-pointer { cursor: pointer; }
+                .cursor-default { cursor: default; }
+                .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+                .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+                .duration-150 { transition-duration: 150ms; }
+                .duration-300 { transition-duration: 300ms; }
+                .ease-in-out { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+                .backdrop-blur-sm { backdrop-filter: blur(4px); }
+                .backdrop-blur-md { backdrop-filter: blur(12px); }
+                .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); }
+                .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+                .hover\\:bg-white\\/20:hover { background-color: rgba(255, 255, 255, 0.2); }
+                .hover\\:bg-red-500\\/30:hover { background-color: rgba(239, 68, 68, 0.3); }
+                .hover\\:bg-yellow-500\\/30:hover { background-color: rgba(245, 158, 11, 0.3); }
+                .hover\\:bg-green-500\\/30:hover { background-color: rgba(34, 197, 94, 0.3); }
+                .hover\\:bg-blue-500\\/30:hover { background-color: rgba(59, 130, 246, 0.3); }
+                .hover\\:bg-orange-500\\/30:hover { background-color: rgba(249, 115, 22, 0.3); }
+                .hover\\:bg-purple-500\\/30:hover { background-color: rgba(168, 85, 247, 0.3); }
+                .hover\\:opacity-90:hover { opacity: 0.9; }
+                .hover\\:scale-105:hover { --tw-scale-x: 1.05; --tw-scale-y: 1.05; }
+                .focus\\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
+                .focus\\:border-indigo-500:focus { border-color: #6366f1; }
+                .focus\\:ring-2:focus { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+                .focus\\:ring-indigo-500\\/50:focus { --tw-ring-color: rgba(99, 102, 241, 0.5); }
+                .file\\:mr-4::file-selector-button { margin-right: 1rem; }
+                .file\\:cursor-pointer::file-selector-button { cursor: pointer; }
+                .file\\:rounded-lg::file-selector-button { border-radius: 0.5rem; }
+                .file\\:border-0::file-selector-button { border-width: 0; }
+                .file\\:bg-indigo-500::file-selector-button { background-color: #6366f1; }
+                .file\\:px-4::file-selector-button { padding-left: 1rem; padding-right: 1rem; }
+                .file\\:py-2::file-selector-button { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+                .file\\:text-sm::file-selector-button { font-size: 0.875rem; line-height: 1.25rem; }
+                .file\\:font-semibold::file-selector-button { font-weight: 600; }
+                .file\\:text-white::file-selector-button { color: #ffffff; }
+                .hover\\:file\\:bg-indigo-600:hover::file-selector-button { background-color: #4f46e5; }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
             font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
         }
         
         .mono {
@@ -18,6 +202,8 @@
         body {
             background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
         }
         
         .glass-panel {
@@ -54,7 +240,7 @@
             position: absolute;
             height: 4px;
             background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            transform-origin: 0 0;
+            transform-origin: 0 50%;
             pointer-events: none;
             box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
             z-index: 5;
@@ -175,9 +361,22 @@
             max-height: 500px;
             margin-top: 1rem;
         }
+        
+        /* Connection line fix for vertical/horizontal lines */
+        .connection-line.vertical {
+            transform-origin: 50% 0;
+        }
+        
+        .connection-line.horizontal {
+            transform-origin: 0 50%;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
     </style>
 </head>
-<body class="p-4">
+<body>
     <!-- Notification Container -->
     <div id="notificationContainer"></div>
     
@@ -193,11 +392,11 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-300 text-sm font-semibold mb-2">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="admin">
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="admin" value="admin">
                 </div>
                 <div>
                     <label class="block text-gray-300 text-sm font-semibold mb-2">Password</label>
-                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="••••">
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="••••" value="1234">
                 </div>
                 <button onclick="login()" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
                     Sign In
@@ -302,6 +501,7 @@
                     </h2>
                     
                     <div class="space-y-3">
+                        <div class="text-xs text-gray-400 mb-2">Note: Use small images (max 300KB) to avoid storage issues</div>
                         <input type="file" id="floorPlanInput" accept="image/*" onchange="uploadFloorPlan()" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 file:cursor-pointer">
                         
                         <button onclick="clearMap()" class="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Clear Map</button>
@@ -443,6 +643,7 @@
         let selectedIcon = '🛏️';
         let connectionStart = null;
         let connectionStartMarker = null;
+        let dataVersion = 1;
 
         // Load data from localStorage
         function loadData() {
@@ -450,6 +651,10 @@
             if (saved) {
                 try {
                     hotelData = JSON.parse(saved);
+                    
+                    // Compress images if they're too large
+                    compressAllImages();
+                    
                     updateStats();
                 } catch (e) {
                     console.error('Error loading data:', e);
@@ -459,58 +664,195 @@
             updateFloorSelector();
         }
 
-        // Save data to localStorage
+        // Compress base64 images to reduce size
+        function compressBase64Image(base64String, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Calculate new dimensions
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to compressed base64
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedBase64);
+                };
+                img.onerror = function() {
+                    resolve(base64String); // Return original if compression fails
+                };
+                img.src = base64String;
+            });
+        }
+
+        // Compress all images in the data
+        async function compressAllImages() {
+            for (const floorNum in hotelData.floors) {
+                const floor = hotelData.floors[floorNum];
+                if (floor.floorPlanUrl && floor.floorPlanUrl.startsWith('data:image')) {
+                    // Check if image is larger than 100KB
+                    const base64Length = floor.floorPlanUrl.length - (floor.floorPlanUrl.indexOf(',') + 1);
+                    const fileSize = Math.round((base64Length * 3) / 4);
+                    
+                    if (fileSize > 100000) { // Larger than 100KB
+                        try {
+                            const compressed = await compressBase64Image(floor.floorPlanUrl, 800, 0.6);
+                            floor.floorPlanUrl = compressed;
+                        } catch (e) {
+                            console.log('Image compression failed:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Optimized save data function
         function saveData() {
             try {
-                localStorage.setItem('hotelHopperData', JSON.stringify(hotelData));
+                // Create a optimized copy without extra data
+                const optimizedData = {
+                    floors: {},
+                    version: dataVersion,
+                    lastUpdated: new Date().toISOString()
+                };
                 
-                // Save to sessionStorage as backup
-                sessionStorage.setItem('hotelHopperData', JSON.stringify(hotelData));
-                
-                // Save to a cookie for cross-tab access
-                document.cookie = `hotelHopperData=${encodeURIComponent(JSON.stringify(hotelData))}; path=/; max-age=31536000`;
-                
-                // Broadcast to other tabs using BroadcastChannel if available
-                if (typeof BroadcastChannel !== 'undefined') {
-                    const channel = new BroadcastChannel('hotel-hopper-data');
-                    channel.postMessage({
-                        type: 'data-update',
-                        data: hotelData
-                    });
+                // Copy floors with only essential data
+                for (const floorNum in hotelData.floors) {
+                    const floor = hotelData.floors[floorNum];
+                    optimizedData.floors[floorNum] = {
+                        name: floor.name,
+                        floorNumber: floor.floorNumber,
+                        floorPlanUrl: floor.floorPlanUrl,
+                        markers: floor.markers.map(m => ({
+                            id: m.id,
+                            x: m.x,
+                            y: m.y,
+                            name: m.name,
+                            icon: m.icon
+                        })),
+                        connections: floor.connections
+                    };
                 }
                 
-                // Trigger storage event to sync across tabs
-                try {
-                    window.dispatchEvent(new StorageEvent('storage', {
-                        key: 'hotelHopperData',
-                        newValue: JSON.stringify(hotelData),
-                        oldValue: localStorage.getItem('hotelHopperData'),
-                        url: window.location.href
-                    }));
-                } catch (e) {
-                    // Fallback for browsers that don't allow creating StorageEvent
-                    window.localStorage.setItem('hotelHopperData', JSON.stringify(hotelData));
-                }
+                const dataString = JSON.stringify(optimizedData);
                 
-                showNotification('✅ Changes saved successfully! Guest page should update automatically.', 'success');
-                updateStats();
+                // Check size before saving
+                const dataSize = new Blob([dataString]).size;
+                const maxSize = 5 * 1024 * 1024; // 5MB limit for localStorage
                 
-                // Try to open guest page in new tab to trigger update
-                setTimeout(() => {
-                    try {
-                        // This helps if guest page is already open
-                        if (typeof BroadcastChannel !== 'undefined') {
-                            const channel = new BroadcastChannel('hotel-hopper-update');
-                            channel.postMessage({ type: 'refresh' });
+                if (dataSize > maxSize) {
+                    showNotification('Data too large! Compressing images...', 'warning');
+                    
+                    // Force compress images
+                    for (const floorNum in optimizedData.floors) {
+                        const floor = optimizedData.floors[floorNum];
+                        if (floor.floorPlanUrl && floor.floorPlanUrl.startsWith('data:image')) {
+                            // Replace with placeholder or remove if too large
+                            floor.floorPlanUrl = null;
                         }
-                    } catch (e) {
-                        console.log('BroadcastChannel not supported');
                     }
-                }, 100);
+                    
+                    // Try again with compressed data
+                    const compressedString = JSON.stringify(optimizedData);
+                    const compressedSize = new Blob([compressedString]).size;
+                    
+                    if (compressedSize > maxSize) {
+                        showNotification('Data still too large after compression. Consider using smaller images.', 'error');
+                        return;
+                    }
+                    
+                    localStorage.setItem('hotelHopperData', compressedString);
+                } else {
+                    localStorage.setItem('hotelHopperData', dataString);
+                }
+                
+                // Also save to IndexedDB for larger storage
+                saveToIndexedDB(optimizedData);
+                
+                // Broadcast update
+                broadcastDataUpdate(optimizedData);
+                
+                showNotification('✅ Changes saved successfully!', 'success');
+                updateStats();
+                dataVersion++;
                 
             } catch (e) {
                 console.error('Error saving data:', e);
-                showNotification('Error saving data', 'error');
+                if (e.name === 'QuotaExceededError') {
+                    showNotification('Storage full! Try using smaller images or export data to file.', 'error');
+                    // Offer to clear old data
+                    if (confirm('Storage is full. Clear all data and start fresh?')) {
+                        localStorage.clear();
+                        hotelData = { floors: {} };
+                        showNotification('Storage cleared. Please refresh the page.', 'info');
+                    }
+                } else {
+                    showNotification('Error saving data: ' + e.message, 'error');
+                }
+            }
+        }
+
+        // Save to IndexedDB for larger storage
+        function saveToIndexedDB(data) {
+            if (!window.indexedDB) return;
+            
+            try {
+                const request = indexedDB.open('HotelHopperDB', 1);
+                
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('hotelData')) {
+                        db.createObjectStore('hotelData');
+                    }
+                };
+                
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['hotelData'], 'readwrite');
+                    const store = transaction.objectStore('hotelData');
+                    store.put(data, 'current');
+                };
+            } catch (e) {
+                console.log('IndexedDB not available:', e);
+            }
+        }
+
+        // Broadcast data update
+        function broadcastDataUpdate(data) {
+            // Use BroadcastChannel if available
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const channel = new BroadcastChannel('hotel-hopper-data');
+                    channel.postMessage({
+                        type: 'data-update',
+                        data: data,
+                        version: dataVersion,
+                        timestamp: Date.now()
+                    });
+                } catch (e) {
+                    console.log('BroadcastChannel error:', e);
+                }
+            }
+            
+            // Dispatch storage event
+            try {
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'hotelHopperData',
+                    newValue: JSON.stringify(data)
+                }));
+            } catch (e) {
+                console.log('StorageEvent error:', e);
             }
         }
 
@@ -600,13 +942,6 @@
         function syncToAllTabs() {
             saveData();
             showNotification('Syncing data to all open pages...', 'info');
-            
-            // Additional method: try to open guest page
-            try {
-                window.open('index.html', '_blank');
-            } catch (e) {
-                console.log('Could not open guest page');
-            }
         }
 
         // Toggle export/import section
@@ -653,8 +988,8 @@
             sessionStorage.removeItem('adminLoggedIn');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = '1234';
             showNotification('Logged out successfully', 'info');
         }
 
@@ -789,9 +1124,9 @@
             
             const file = document.getElementById('floorPlanInput').files[0];
             if (file) {
-                // Check file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('File size too large (max 5MB)', 'error');
+                // Check file size (max 300KB)
+                if (file.size > 300 * 1024) {
+                    showNotification('File size too large (max 300KB). Please use a smaller image.', 'error');
                     return;
                 }
                 
@@ -1147,14 +1482,25 @@
             
             const dx = x2 - x1;
             const dy = y2 - y1;
-            const length = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate distance between points
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate angle (in degrees)
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
             
             // Position line at center of marker1
             line.style.left = x1 + '%';
             line.style.top = y1 + '%';
-            line.style.width = length + '%';
+            line.style.width = distance + '%';
             line.style.transform = `rotate(${angle}deg)`;
+            
+            // Special handling for vertical/horizontal lines
+            if (Math.abs(dx) < 0.1) {
+                line.classList.add('vertical');
+            } else if (Math.abs(dy) < 0.1) {
+                line.classList.add('horizontal');
+            }
             
             container.appendChild(line);
         }
@@ -1175,11 +1521,16 @@
                 item.onclick = () => {
                     // Center view on marker
                     const container = document.getElementById('floorPlanContainer');
-                    container.scrollTo({
-                        top: (marker.y / 100 * container.scrollHeight) - container.clientHeight / 2,
-                        left: (marker.x / 100 * container.scrollWidth) - container.clientWidth / 2,
-                        behavior: 'smooth'
-                    });
+                    const img = container.querySelector('img');
+                    if (img) {
+                        const scrollLeft = (marker.x / 100 * img.offsetWidth) - (container.offsetWidth / 2);
+                        const scrollTop = (marker.y / 100 * img.offsetHeight) - (container.offsetHeight / 2);
+                        container.scrollTo({
+                            left: Math.max(0, scrollLeft),
+                            top: Math.max(0, scrollTop),
+                            behavior: 'smooth'
+                        });
+                    }
                 };
                 item.innerHTML = `
                     <div class="flex items-center gap-2">
@@ -1201,7 +1552,7 @@
             notification.className = `notification ${type}`;
             notification.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <span class="text-xl">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                    <span class="text-xl">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span>
                     <span class="text-gray-800 font-medium">${message}</span>
                 </div>
             `;
