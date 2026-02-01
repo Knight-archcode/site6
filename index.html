@@ -177,6 +177,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        #qrcode img {
+            border-radius: 4px;
         }
         
         .hero-section {
@@ -192,6 +200,25 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+        
+        .qr-action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .qr-action-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .qr-action-buttons button:hover {
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -260,14 +287,40 @@
                 </div>
             </div>
 
-            <!-- QR Code -->
+            <!-- QR Code Section - Enhanced -->
             <div id="qrContainer" class="glass-panel rounded-2xl p-6 hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <span>📱</span> Share Route
+                    <span>📱</span> Share Your Route
                 </h2>
                 
-                <div id="qrcode" class="mb-4"></div>
-                <p class="text-xs text-gray-500 text-center mono" id="qrUrl"></p>
+                <div class="mb-4">
+                    <div id="qrcode" class="mb-4 mx-auto" style="width: 200px; height: 200px;"></div>
+                    
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-gray-600 mb-2">Scan this QR code to share this route:</p>
+                        <div class="bg-gray-100 p-3 rounded-lg mono">
+                            <p class="text-xs text-gray-500 break-all" id="qrUrl"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="qr-action-buttons">
+                        <button onclick="downloadQR()" class="bg-green-500 hover:bg-green-600 text-white">
+                            📥 Download QR
+                        </button>
+                        <button onclick="copyQRUrl()" class="bg-blue-500 hover:bg-blue-600 text-white">
+                            📋 Copy Link
+                        </button>
+                        <button onclick="shareRoute()" class="bg-purple-500 hover:bg-purple-600 text-white">
+                            📤 Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-xs text-blue-700">
+                        <span class="font-bold">💡 Tip:</span> This QR code contains a direct link to this exact route. Anyone who scans it will see the same navigation instructions.
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -294,21 +347,22 @@
         let hotelData = { floors: {} };
         let currentFloorView = null;
         let currentRoute = null;
+        let currentQRCode = null;
 
         // Load data from localStorage
         function loadData() {
-            console.log('Loading data from localStorage...');
+            console.log('Index: Loading data from localStorage...');
             const saved = localStorage.getItem('hotelHopperData');
             
             if (saved) {
                 try {
                     hotelData = JSON.parse(saved);
-                    console.log('Successfully loaded data:', hotelData);
+                    console.log('Index: Successfully loaded data:', hotelData);
                     
                     // Validate and ensure data structure
                     if (!hotelData.floors) {
                         hotelData.floors = {};
-                        console.warn('Fixed missing floors object');
+                        console.warn('Index: Fixed missing floors object');
                     }
                     
                     // Ensure each floor has required arrays
@@ -316,11 +370,11 @@
                         const floor = hotelData.floors[floorKey];
                         if (!floor.markers) {
                             floor.markers = [];
-                            console.log(`Fixed markers array for floor ${floorKey}`);
+                            console.log(`Index: Fixed markers array for floor ${floorKey}`);
                         }
                         if (!floor.connections) {
                             floor.connections = [];
-                            console.log(`Fixed connections array for floor ${floorKey}`);
+                            console.log(`Index: Fixed connections array for floor ${floorKey}`);
                         }
                     });
                     
@@ -334,11 +388,11 @@
                         switchFloorView();
                     }
                 } catch (error) {
-                    console.error('Error parsing saved data:', error);
+                    console.error('Index: Error parsing saved data:', error);
                     showNoDataMessage();
                 }
             } else {
-                console.log('No data found in localStorage');
+                console.log('Index: No data found in localStorage');
                 showNoDataMessage();
             }
         }
@@ -381,7 +435,7 @@
                 }
             });
             
-            console.log(`Populated ${totalMarkers} markers`);
+            console.log(`Index: Populated ${totalMarkers} markers`);
         }
 
         // Populate floor selector
@@ -436,7 +490,7 @@
             const container = document.getElementById('mapContainer');
             const floor = hotelData.floors[currentFloorView];
             
-            console.log(`Rendering connections for floor ${currentFloorView}:`, floor.connections);
+            console.log(`Index: Rendering connections for floor ${currentFloorView}:`, floor.connections);
             
             // Regular connections
             if (floor.connections && floor.connections.length > 0) {
@@ -446,9 +500,9 @@
                     
                     if (marker1 && marker2) {
                         drawLine(container, marker1, marker2, false);
-                        console.log(`Drawn connection between ${marker1.name} and ${marker2.name}`);
+                        console.log(`Index: Drawn connection between ${marker1.name} and ${marker2.name}`);
                     } else {
-                        console.warn(`Could not find markers for connection: ${id1} - ${id2}`);
+                        console.warn(`Index: Could not find markers for connection: ${id1} - ${id2}`);
                     }
                 });
             }
@@ -761,27 +815,128 @@
             return cross > 0 ? 'Turn right' : 'Turn left';
         }
 
-        // Generate QR code
+        // Generate QR code - Enhanced version
         function generateQR(start, end) {
             const qrContainer = document.getElementById('qrContainer');
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = '';
             
             try {
+                // Create a clean URL with route parameters
                 const url = `${window.location.origin}${window.location.pathname}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
-                new QRCode(qrDiv, {
+                
+                // Clear any existing QR code
+                while (qrDiv.firstChild) {
+                    qrDiv.removeChild(qrDiv.firstChild);
+                }
+                
+                // Generate new QR code
+                currentQRCode = new QRCode(qrDiv, {
                     text: url,
-                    width: 200,
-                    height: 200,
-                    colorDark: '#667eea',
-                    colorLight: '#ffffff',
+                    width: 180,
+                    height: 180,
+                    colorDark: "#667eea",
+                    colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
                 });
                 
+                // Display the URL
                 document.getElementById('qrUrl').textContent = url;
+                
+                // Show the QR container with animation
                 qrContainer.classList.remove('hidden');
+                qrContainer.style.opacity = '0';
+                qrContainer.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    qrContainer.style.transition = 'all 0.3s ease';
+                    qrContainer.style.opacity = '1';
+                    qrContainer.style.transform = 'translateY(0)';
+                }, 10);
+                
+                console.log('QR Code generated for URL:', url);
+                
             } catch (e) {
                 console.error('QR generation failed:', e);
+                alert('Failed to generate QR code. Please try again.');
+            }
+        }
+
+        // Download QR code as image
+        function downloadQR() {
+            const qrDiv = document.getElementById('qrcode');
+            const canvas = qrDiv.querySelector('canvas');
+            const img = qrDiv.querySelector('img');
+            
+            if (canvas || img) {
+                const link = document.createElement('a');
+                const start = document.getElementById('startLocation').selectedOptions[0]?.text || 'Start';
+                const end = document.getElementById('endLocation').selectedOptions[0]?.text || 'End';
+                const filename = `HotelHopper-${start}-to-${end}.png`.replace(/[^a-zA-Z0-9\-]/g, '_');
+                
+                if (canvas) {
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png');
+                } else if (img) {
+                    link.download = filename;
+                    link.href = img.src;
+                }
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('QR code downloaded successfully!');
+            } else {
+                alert('QR code not available for download.');
+            }
+        }
+
+        // Copy QR URL to clipboard
+        function copyQRUrl() {
+            const url = document.getElementById('qrUrl').textContent;
+            
+            navigator.clipboard.writeText(url).then(() => {
+                // Show success feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy link to clipboard.');
+            });
+        }
+
+        // Share route via Web Share API or fallback
+        function shareRoute() {
+            const url = document.getElementById('qrUrl').textContent;
+            const start = document.getElementById('startLocation').selectedOptions[0]?.text || 'Start';
+            const end = document.getElementById('endLocation').selectedOptions[0]?.text || 'End';
+            const title = `Hotel Hopper Route: ${start} to ${end}`;
+            const text = `Check out this route from ${start} to ${end} in Hotel Hopper Navigator!`;
+            
+            if (navigator.share) {
+                // Use Web Share API if available
+                navigator.share({
+                    title: title,
+                    text: text,
+                    url: url
+                }).then(() => {
+                    console.log('Route shared successfully');
+                }).catch(err => {
+                    console.log('Error sharing:', err);
+                    // Fallback to copying URL
+                    copyQRUrl();
+                });
+            } else {
+                // Fallback to copying URL
+                copyQRUrl();
             }
         }
 
@@ -792,9 +947,23 @@
             const end = params.get('end');
             
             if (start && end) {
+                // Set the dropdown values
                 document.getElementById('startLocation').value = start;
                 document.getElementById('endLocation').value = end;
-                setTimeout(() => findRoute(), 500);
+                
+                // Wait a bit for data to load, then find route
+                setTimeout(() => {
+                    if (hotelData.floors && Object.keys(hotelData.floors).length > 0) {
+                        findRoute();
+                    } else {
+                        // If data isn't loaded yet, wait a bit more
+                        setTimeout(() => {
+                            if (hotelData.floors && Object.keys(hotelData.floors).length > 0) {
+                                findRoute();
+                            }
+                        }, 500);
+                    }
+                }, 300);
             }
         }
 
