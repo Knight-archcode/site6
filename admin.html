@@ -185,19 +185,6 @@
             margin-top: 1rem;
         }
         
-        /* Connection line fix for vertical/horizontal lines */
-        .connection-line.vertical {
-            transform-origin: 50% 0;
-        }
-        
-        .connection-line.horizontal {
-            transform-origin: 0 50%;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        }
-        
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
@@ -217,259 +204,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(79, 70, 229, 0.7);
         }
-        
-        /* File input styling */
-        input[type="file"] {
-            color: #e5e7eb;
-        }
-        
-        input[type="file"]::file-selector-button {
-            background: #4f46e5;
-            color: white;
-            border: 0;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            margin-right: 1rem;
-        }
-        
-        input[type="file"]::file-selector-button:hover {
-            background: #4338ca;
-        }
-        
-        /* Input styling */
-        input, select, textarea {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-        }
-        
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        /* Button styling */
-        button {
-            cursor: pointer;
-        }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        /* Glass effect improvements */
-        .glass-panel {
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.1) 0%, 
-                rgba(255, 255, 255, 0.05) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Grid layout fixes */
-        .grid {
-            display: grid;
-        }
-        
-        .gap-2 {
-            gap: 0.5rem;
-        }
-        
-        .gap-3 {
-            gap: 0.75rem;
-        }
-        
-        .gap-4 {
-            gap: 1rem;
-        }
-        
-        .gap-6 {
-            gap: 1.5rem;
-        }
-        
-        .space-y-2 > * + * {
-            margin-top: 0.5rem;
-        }
-        
-        .space-y-3 > * + * {
-            margin-top: 0.75rem;
-        }
-        
-        .space-y-4 > * + * {
-            margin-top: 1rem;
-        }
-        
-        .space-y-6 > * + * {
-            margin-top: 1.5rem;
-        }
-        
-        /* Flex utilities */
-        .flex {
-            display: flex;
-        }
-        
-        .items-center {
-            align-items: center;
-        }
-        
-        .justify-center {
-            justify-content: center;
-        }
-        
-        .justify-between {
-            justify-content: space-between;
-        }
-        
-        .flex-1 {
-            flex: 1 1 0%;
-        }
-        
-        /* Spacing utilities */
-        .p-3 { padding: 0.75rem; }
-        .p-4 { padding: 1rem; }
-        .p-6 { padding: 1.5rem; }
-        .p-8 { padding: 2rem; }
-        
-        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-        .px-4 { padding-left: 1rem; padding-right: 1rem; }
-        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-        
-        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-        
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-3 { margin-bottom: 0.75rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mb-6 { margin-bottom: 1.5rem; }
-        .mb-8 { margin-bottom: 2rem; }
-        
-        .mt-2 { margin-top: 0.5rem; }
-        .mt-3 { margin-top: 0.75rem; }
-        .mt-4 { margin-top: 1rem; }
-        .mt-6 { margin-top: 1.5rem; }
-        
-        /* Typography */
-        .text-xs { font-size: 0.75rem; line-height: 1rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .text-base { font-size: 1rem; line-height: 1.5rem; }
-        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-        .text-5xl { font-size: 3rem; line-height: 1; }
-        .text-6xl { font-size: 3.75rem; line-height: 1; }
-        .text-7xl { font-size: 4.5rem; line-height: 1; }
-        
-        .font-semibold { font-weight: 600; }
-        .font-bold { font-weight: 700; }
-        
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-        .text-right { text-align: right; }
-        
-        /* Width and height */
-        .w-full { width: 100%; }
-        .h-auto { height: auto; }
-        .min-h-screen { min-height: 100vh; }
-        .min-h-\[600px\] { min-height: 600px; }
-        .max-w-md { max-width: 28rem; }
-        .max-h-64 { max-height: 16rem; }
-        
-        /* Borders and rounded corners */
-        .rounded-lg { border-radius: 0.5rem; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .rounded-2xl { border-radius: 1rem; }
-        .rounded-3xl { border-radius: 1.5rem; }
-        
-        .border { border-width: 1px; }
-        .border-2 { border-width: 2px; }
-        .border-l-4 { border-left-width: 4px; }
-        
-        /* Overflow */
-        .overflow-hidden { overflow: hidden; }
-        .overflow-y-auto { overflow-y: auto; }
-        
-        /* Position */
-        .relative { position: relative; }
-        .absolute { position: absolute; }
-        .fixed { position: fixed; }
-        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-        
-        /* Z-index */
-        .z-10 { z-index: 10; }
-        .z-50 { z-index: 50; }
-        .z-1000 { z-index: 1000; }
-        
-        /* Transform */
-        .transform { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
-        .-translate-x-1\\/2 { --tw-translate-x: -50%; }
-        .-translate-y-1\\/2 { --tw-translate-y: -50%; }
-        .translate-y-2 { --tw-translate-y: 0.5rem; }
-        
-        /* Grid columns for responsiveness */
-        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-        
-        @media (min-width: 1024px) {
-            .lg\:grid-cols-4 { 
-                grid-template-columns: repeat(4, minmax(0, 1fr)); 
-            }
-            .lg\:col-span-1 { 
-                grid-column: span 1 / span 1; 
-            }
-            .lg\:col-span-3 { 
-                grid-column: span 3 / span 3; 
-            }
-        }
-        
-        /* Cursor */
-        .cursor-pointer { cursor: pointer; }
-        
-        /* Transition */
-        .transition-all { 
-            transition-property: all; 
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
-        .transition-transform {
-            transition-property: transform;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
-        
-        /* Shadow */
-        .shadow-lg {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-        }
-        .shadow-xl {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-        .shadow-2xl {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        
-        /* Backdrop blur */
-        .backdrop-blur-sm { backdrop-filter: blur(4px); }
-        .backdrop-blur-md { backdrop-filter: blur(12px); }
-        
-        /* Display utilities */
-        .block { display: block; }
-        .inline-block { display: inline-block; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -547,7 +281,7 @@
                         </div>
                         <div>
                             <h4 class="text-white font-semibold mb-2">Import Data</h4>
-                            <input type="file" id="importFile" accept=".json" class="w-full text-sm text-gray-300 mb-2">
+                            <input type="file" id="importFile" accept=".json" class="w-full text-sm text-gray-300 mb-2 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 file:cursor-pointer">
                             <button onclick="importData()" class="w-full px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded-lg border border-orange-500/30 transition-all">
                                 📤 Upload Data File
                             </button>
@@ -584,8 +318,8 @@
                         </div>
                         
                         <div class="flex gap-2">
-                            <button onclick="renameFloor()" class="flex-1 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 rounded-lg text-sm border border-yellow-500/30 transition-all">Rename</button>
-                            <button onclick="deleteFloor()" class="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Delete</button>
+                            <button onclick="renameCurrentFloor()" class="flex-1 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 rounded-lg text-sm border border-yellow-500/30 transition-all">Rename</button>
+                            <button onclick="deleteCurrentFloor()" class="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -598,9 +332,9 @@
                     
                     <div class="space-y-3">
                         <div class="text-xs text-gray-400 mb-2">Upload floor plan image (max 10MB)</div>
-                        <input type="file" id="floorPlanInput" accept="image/*" onchange="uploadFloorPlan()" class="w-full text-sm text-gray-300">
+                        <input type="file" id="floorPlanInput" accept="image/*" onchange="uploadFloorPlan()" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 file:cursor-pointer">
                         
-                        <button onclick="clearMap()" class="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Clear Map</button>
+                        <button onclick="clearCurrentMap()" class="w-full px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm border border-red-500/30 transition-all">Clear Map</button>
                     </div>
                 </div>
 
@@ -743,10 +477,12 @@
 
         // Load data from localStorage
         function loadData() {
+            console.log('Loading hotel data...');
             const saved = localStorage.getItem('hotelHopperData');
             if (saved) {
                 try {
                     hotelData = JSON.parse(saved);
+                    console.log('Loaded data:', hotelData);
                     updateStats();
                 } catch (e) {
                     console.error('Error loading data:', e);
@@ -756,7 +492,7 @@
             updateFloorSelector();
         }
 
-        // Optimized save data function with IndexedDB backup
+        // Optimized save data function
         function saveData() {
             try {
                 // Create optimized copy
@@ -771,7 +507,7 @@
                     const floor = hotelData.floors[floorNum];
                     optimizedData.floors[floorNum] = {
                         name: floor.name,
-                        floorNumber: floor.floorNumber,
+                        floorNumber: floorNum.toString(),
                         floorPlanUrl: floor.floorPlanUrl,
                         markers: floor.markers.map(m => ({
                             id: m.id,
@@ -792,9 +528,6 @@
                 // Save to localStorage
                 localStorage.setItem('hotelHopperData', dataString);
                 
-                // Save to IndexedDB as backup
-                saveToIndexedDB(optimizedData);
-                
                 // Broadcast update
                 broadcastDataUpdate(optimizedData);
                 
@@ -805,115 +538,11 @@
             } catch (e) {
                 console.error('Error saving data:', e);
                 if (e.name === 'QuotaExceededError') {
-                    // Try to save to IndexedDB only
-                    saveToIndexedDBOnly(hotelData);
-                    showNotification('Saved to IndexedDB (localStorage full)', 'warning');
+                    showNotification('Storage full! Try using smaller images or export data.', 'error');
                 } else {
                     showNotification('Error saving data: ' + e.message, 'error');
                 }
             }
-        }
-
-        // Save to IndexedDB
-        function saveToIndexedDB(data) {
-            if (!window.indexedDB) return;
-            
-            return new Promise((resolve, reject) => {
-                try {
-                    const request = indexedDB.open('HotelHopperDB', 1);
-                    
-                    request.onupgradeneeded = function(event) {
-                        const db = event.target.result;
-                        if (!db.objectStoreNames.contains('hotelData')) {
-                            const store = db.createObjectStore('hotelData', { keyPath: 'id' });
-                            store.createIndex('version', 'version', { unique: false });
-                        }
-                    };
-                    
-                    request.onsuccess = function(event) {
-                        const db = event.target.result;
-                        const transaction = db.transaction(['hotelData'], 'readwrite');
-                        const store = transaction.objectStore('hotelData');
-                        
-                        const record = {
-                            id: 'current',
-                            data: data,
-                            version: dataVersion,
-                            timestamp: Date.now()
-                        };
-                        
-                        const putRequest = store.put(record);
-                        
-                        putRequest.onsuccess = function() {
-                            resolve();
-                        };
-                        
-                        putRequest.onerror = function(e) {
-                            console.error('IndexedDB put error:', e);
-                            reject(e);
-                        };
-                    };
-                    
-                    request.onerror = function(event) {
-                        console.error('IndexedDB open error:', event);
-                        reject(event);
-                    };
-                } catch (e) {
-                    console.log('IndexedDB not available:', e);
-                    reject(e);
-                }
-            });
-        }
-
-        // Save to IndexedDB only (when localStorage is full)
-        function saveToIndexedDBOnly(data) {
-            if (!window.indexedDB) {
-                showNotification('No storage options available! Please export your data.', 'error');
-                return;
-            }
-            
-            saveToIndexedDB(data).then(() => {
-                showNotification('Data saved to IndexedDB backup', 'info');
-            }).catch(e => {
-                showNotification('Could not save to any storage. Please export data.', 'error');
-            });
-        }
-
-        // Load from IndexedDB as fallback
-        function loadFromIndexedDB() {
-            return new Promise((resolve, reject) => {
-                if (!window.indexedDB) {
-                    resolve(null);
-                    return;
-                }
-                
-                const request = indexedDB.open('HotelHopperDB', 1);
-                
-                request.onsuccess = function(event) {
-                    const db = event.target.result;
-                    const transaction = db.transaction(['hotelData'], 'readonly');
-                    const store = transaction.objectStore('hotelData');
-                    const getRequest = store.get('current');
-                    
-                    getRequest.onsuccess = function() {
-                        if (getRequest.result && getRequest.result.data) {
-                            resolve(getRequest.result.data);
-                        } else {
-                            resolve(null);
-                        }
-                    };
-                    
-                    getRequest.onerror = function(e) {
-                        console.error('IndexedDB get error:', e);
-                        resolve(null);
-                    };
-                };
-                
-                request.onerror = function(event) {
-                    console.error('IndexedDB open error:', event);
-                    resolve(null);
-                };
-            });
         }
 
         // Broadcast data update
@@ -984,8 +613,11 @@
                     if (confirm('This will replace all current data. Are you sure?')) {
                         hotelData = importedData;
                         saveData();
-                        loadFloorPlan();
                         updateFloorSelector();
+                        // Clear current floor selection
+                        currentFloor = null;
+                        document.getElementById('floorSelector').value = '';
+                        clearFloorPlan();
                         showNotification('Data imported successfully!', 'success');
                         fileInput.value = '';
                     }
@@ -1102,7 +734,9 @@
             }
         };
 
-        // Floor management
+        // ========== FLOOR MANAGEMENT - FIXED ==========
+
+        // Add new floor
         function addFloor() {
             const name = document.getElementById('newFloorName').value.trim();
             if (!name) {
@@ -1110,7 +744,13 @@
                 return;
             }
             
-            const floorNum = Object.keys(hotelData.floors).length + 1;
+            // Find the next available floor number
+            let floorNum = 1;
+            while (hotelData.floors[floorNum]) {
+                floorNum++;
+            }
+            
+            // Create new floor with proper structure
             hotelData.floors[floorNum] = {
                 name: name,
                 floorNumber: floorNum.toString(),
@@ -1119,13 +759,20 @@
                 connections: []
             };
             
+            console.log(`Added floor ${floorNum}:`, hotelData.floors[floorNum]);
+            
             document.getElementById('newFloorName').value = '';
             updateFloorSelector();
             saveData();
             showNotification(`Floor "${name}" added successfully!`, 'success');
+            
+            // Auto-select the new floor
+            document.getElementById('floorSelector').value = floorNum;
+            switchFloor();
         }
 
-        function deleteFloor() {
+        // Delete current floor
+        function deleteCurrentFloor() {
             if (!currentFloor) {
                 showNotification('Please select a floor to delete', 'error');
                 return;
@@ -1142,7 +789,8 @@
             }
         }
 
-        function renameFloor() {
+        // Rename current floor
+        function renameCurrentFloor() {
             if (!currentFloor) {
                 showNotification('Please select a floor to rename', 'error');
                 return;
@@ -1159,31 +807,45 @@
             }
         }
 
+        // Update floor selector dropdown
         function updateFloorSelector() {
             const selector = document.getElementById('floorSelector');
+            const currentValue = selector.value;
             selector.innerHTML = '<option value="">Select Floor</option>';
             
-            Object.keys(hotelData.floors).forEach(floorNum => {
+            // Sort floors by floor number
+            const floorNumbers = Object.keys(hotelData.floors).sort((a, b) => parseInt(a) - parseInt(b));
+            
+            floorNumbers.forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
                 const option = document.createElement('option');
                 option.value = floorNum;
-                option.textContent = floor.name;
+                option.textContent = `${floor.name} (Floor ${floorNum})`;
                 selector.appendChild(option);
             });
             
-            if (currentFloor) {
+            // Restore selection if possible
+            if (currentFloor && hotelData.floors[currentFloor]) {
                 selector.value = currentFloor;
+            } else if (currentValue && hotelData.floors[currentValue]) {
+                selector.value = currentValue;
             }
+            
+            console.log('Floor selector updated with floors:', floorNumbers);
         }
 
+        // Switch to selected floor
         function switchFloor() {
             const selector = document.getElementById('floorSelector');
             currentFloor = selector.value;
             
-            if (currentFloor) {
+            console.log('Switching to floor:', currentFloor);
+            
+            if (currentFloor && hotelData.floors[currentFloor]) {
                 loadFloorPlan();
                 updateFloorIndicator();
                 updateStats();
+                setMode(null); // Reset edit mode when switching floors
             } else {
                 clearFloorPlan();
                 updateStats();
@@ -1192,12 +854,14 @@
 
         function updateFloorIndicator() {
             const indicator = document.getElementById('floorIndicator');
-            if (currentFloor) {
+            if (currentFloor && hotelData.floors[currentFloor]) {
                 indicator.textContent = `Current: ${hotelData.floors[currentFloor].name}`;
             } else {
                 indicator.textContent = '';
             }
         }
+
+        // ========== FLOOR PLAN MANAGEMENT ==========
 
         // Floor plan management - UPDATED TO 10MB
         function uploadFloorPlan() {
@@ -1234,7 +898,14 @@
             const container = document.getElementById('floorPlanContainer');
             container.innerHTML = '';
             
+            if (!currentFloor || !hotelData.floors[currentFloor]) {
+                container.innerHTML = '<p class="text-gray-500 text-center"><span class="text-4xl block mb-2">🗺️</span>Select a floor first</p>';
+                return;
+            }
+            
             const floor = hotelData.floors[currentFloor];
+            console.log('Loading floor plan for floor:', currentFloor, floor);
+            
             if (!floor.floorPlanUrl) {
                 container.innerHTML = '<p class="text-gray-500 text-center"><span class="text-4xl block mb-2">🗺️</span>Upload a floor plan for this floor</p>';
                 return;
@@ -1260,7 +931,7 @@
             document.getElementById('connectionInfo').classList.add('hidden');
         }
 
-        function clearMap() {
+        function clearCurrentMap() {
             if (!currentFloor) {
                 showNotification('Please select a floor first', 'error');
                 return;
@@ -1275,7 +946,8 @@
             }
         }
 
-        // Edit modes
+        // ========== EDITING MODES ==========
+
         function setMode(mode) {
             editMode = mode;
             connectionStart = null;
@@ -1329,7 +1001,8 @@
             }
         }
 
-        // Marker management
+        // ========== MARKER MANAGEMENT ==========
+
         function handleFloorPlanClick(e) {
             if (!editMode || !currentFloor) return;
             
@@ -1356,6 +1029,11 @@
             const name = document.getElementById('markerName').value.trim();
             if (!name) {
                 showNotification('Please enter a marker name', 'error');
+                return;
+            }
+            
+            if (!currentFloor) {
+                showNotification('Please select a floor first', 'error');
                 return;
             }
             
@@ -1386,8 +1064,18 @@
         }
 
         function deleteMarker(markerId) {
+            if (!currentFloor) {
+                showNotification('Please select a floor first', 'error');
+                return;
+            }
+            
             const floor = hotelData.floors[currentFloor];
             const marker = floor.markers.find(m => m.id === markerId);
+            
+            if (!marker) {
+                showNotification('Marker not found', 'error');
+                return;
+            }
             
             if (confirm(`Delete marker "${marker.name}"?`)) {
                 floor.markers = floor.markers.filter(m => m.id !== markerId);
@@ -1401,11 +1089,21 @@
         function handleMarkerClick(markerId, e) {
             e.stopPropagation();
             
+            if (!currentFloor) {
+                showNotification('Please select a floor first', 'error');
+                return;
+            }
+            
             if (editMode === 'delete') {
                 deleteMarker(markerId);
             } else if (editMode === 'connect' || editMode === 'disconnect') {
                 const floor = hotelData.floors[currentFloor];
                 const marker = floor.markers.find(m => m.id === markerId);
+                
+                if (!marker) {
+                    showNotification('Marker not found', 'error');
+                    return;
+                }
                 
                 if (!connectionStart) {
                     // First marker selection
@@ -1456,6 +1154,11 @@
         }
 
         function connectMarkers(id1, id2) {
+            if (!currentFloor) {
+                showNotification('Please select a floor first', 'error');
+                return;
+            }
+            
             const floor = hotelData.floors[currentFloor];
             const exists = floor.connections.some(c => 
                 (c[0] === id1 && c[1] === id2) || (c[0] === id2 && c[1] === id1)
@@ -1476,6 +1179,11 @@
         }
 
         function disconnectMarkers(id1, id2) {
+            if (!currentFloor) {
+                showNotification('Please select a floor first', 'error');
+                return;
+            }
+            
             const floor = hotelData.floors[currentFloor];
             const initialLength = floor.connections.length;
             
@@ -1516,11 +1224,15 @@
             const img = container.querySelector('img');
             if (!img) return;
             
+            if (!currentFloor || !hotelData.floors[currentFloor]) return;
+            
             const floor = hotelData.floors[currentFloor];
             
             // Clear existing markers
             const existingMarkers = container.querySelectorAll('.marker');
             existingMarkers.forEach(marker => marker.remove());
+            
+            console.log(`Rendering ${floor.markers.length} markers for floor ${currentFloor}`);
             
             floor.markers.forEach(marker => {
                 const markerEl = document.createElement('div');
@@ -1539,11 +1251,15 @@
             const img = container.querySelector('img');
             if (!img) return;
             
+            if (!currentFloor || !hotelData.floors[currentFloor]) return;
+            
             const floor = hotelData.floors[currentFloor];
             
             // Clear existing connections
             const existingLines = container.querySelectorAll('.connection-line:not(.temp)');
             existingLines.forEach(line => line.remove());
+            
+            console.log(`Rendering ${floor.connections.length} connections for floor ${currentFloor}`);
             
             floor.connections.forEach(([id1, id2]) => {
                 const marker1 = floor.markers.find(m => m.id === id1);
@@ -1586,6 +1302,12 @@
 
         function updateMarkersList() {
             const list = document.getElementById('markersList');
+            
+            if (!currentFloor || !hotelData.floors[currentFloor]) {
+                list.innerHTML = '<p class="text-gray-400 text-sm">No floor selected</p>';
+                return;
+            }
+            
             const floor = hotelData.floors[currentFloor];
             
             if (!floor.markers.length) {
