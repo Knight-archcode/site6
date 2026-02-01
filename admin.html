@@ -518,37 +518,47 @@
         const DB_VERSION = 1;
         const STORE_NAME = 'floorPlans';
 
-        // Initialize IndexedDB
-        function initImageDB() {
-            return new Promise((resolve, reject) => {
-                if (!window.indexedDB) {
-                    console.log('IndexedDB not supported, using localStorage only');
-                    resolve(false);
-                    return;
-                }
-                
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
-                request.onupgradeneeded = function(event) {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME, { keyPath: 'floorId' });
-                    }
-                };
-                
-                request.onsuccess = function(event) {
-                    imageDB = event.target.result;
-                    console.log('IndexedDB initialized successfully');
-                    resolve(true);
-                };
-                
-                request.onerror = function(event) {
-                    console.error('IndexedDB initialization failed:', event);
-                    resolve(false);
-                };
-            });
+function initImageDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+            console.log('IndexedDB not supported, using localStorage only');
+            resolve(false);
+            return;
         }
-
+        
+        // Wrap in try-catch to handle any initialization errors
+        try {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'floorId' });
+                }
+            };
+            
+            request.onsuccess = function(event) {
+                imageDB = event.target.result;
+                console.log('IndexedDB initialized successfully');
+                resolve(true);
+            };
+            
+            request.onerror = function(event) {
+                console.log('IndexedDB initialization failed, falling back to localStorage');
+                // Don't reject, just resolve with false
+                resolve(false);
+            };
+            
+            request.onblocked = function(event) {
+                console.log('IndexedDB blocked, falling back to localStorage');
+                resolve(false);
+            };
+        } catch (e) {
+            console.log('IndexedDB error, using localStorage:', e);
+            resolve(false);
+        }
+    });
+}
         // Save image to IndexedDB
         async function saveImageToDB(floorId, imageData) {
             if (!imageDB) return false;
