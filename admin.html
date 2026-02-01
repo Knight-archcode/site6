@@ -712,6 +712,69 @@ function initImageDB() {
                 try {
                     hotelData = JSON.parse(saved);
                     console.log('Loaded data:', hotelData);
+
+                    function loadData() {
+    console.log('Attempting to load hotel data...');
+    
+    const saved = localStorage.getItem('hotelHopperData');
+    if (saved) {
+        try {
+            hotelData = JSON.parse(saved);
+            console.log('Data loaded successfully, floors:', Object.keys(hotelData.floors).length);
+            
+            if (Object.keys(hotelData.floors).length > 0) {
+                populateLocations();
+                populateFloorSelector();
+                setupDataSync();
+                showNotification('Hotel data loaded successfully!', 'success');
+                
+                // Check if images need to be loaded from IndexedDB
+                loadImagesFromIndexedDB();
+                return;
+            } else {
+                showDataNotFoundMessage();
+            }
+        } catch (e) {
+            console.error('Error parsing saved data:', e);
+            showNotification('Error loading hotel data', 'error');
+            showDataNotFoundMessage();
+        }
+    } else {
+        showDataNotFoundMessage();
+    }
+}
+
+// New function to handle IndexedDB image loading in guest site
+async function loadImagesFromIndexedDB() {
+    if (!window.indexedDB) return;
+    
+    try {
+        const request = indexedDB.open('HotelHopperImages', 1);
+        request.onsuccess = function(event) {
+            const db = event.target.result;
+            const transaction = db.transaction(['floorPlans'], 'readonly');
+            const store = transaction.objectStore('floorPlans');
+            
+            Object.keys(hotelData.floors).forEach(floorNum => {
+                const floor = hotelData.floors[floorNum];
+                if (floor.floorPlanUrl === 'indexeddb' || !floor.floorPlanUrl) {
+                    const getRequest = store.get(floorNum);
+                    getRequest.onsuccess = function() {
+                        if (getRequest.result) {
+                            floor.floorPlanUrl = getRequest.result.data;
+                            // If we're viewing this floor, re-render
+                            if (currentFloorView === floorNum) {
+                                renderMap();
+                            }
+                        }
+                    };
+                }
+            });
+        };
+    } catch (e) {
+        console.log('Could not load images from IndexedDB:', e);
+    }
+}
                     
                     // Try to load images from IndexedDB
                     await initImageDB();
