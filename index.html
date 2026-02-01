@@ -1,4 +1,397 @@
-// Add this function to index.html (inside the script tag)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Hopper Navigator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .mono {
+            font-family: 'DM Mono', monospace;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .marker {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            font-size: 24px;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .marker {
+                width: 56px;
+                height: 56px;
+                font-size: 28px;
+            }
+        }
+        
+        .marker.start {
+            border-color: #10b981;
+            border-width: 4px;
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .marker.end {
+            border-color: #3b82f6;
+            border-width: 4px;
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            animation: pulse 2s infinite 0.5s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+            }
+        }
+        
+        .connection-line {
+            position: absolute;
+            height: 4px;
+            background: #cbd5e1;
+            transform-origin: 0 0;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        .connection-line.active {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            height: 5px;
+            opacity: 1;
+            box-shadow: 0 2px 12px rgba(239, 68, 68, 0.4);
+            animation: pathPulse 1.5s infinite;
+        }
+        
+        .connection-line.elevator {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+            border-top: 2px dashed #fff;
+            height: 6px;
+            opacity: 1;
+            box-shadow: 0 2px 12px rgba(249, 115, 22, 0.5);
+        }
+        
+        @keyframes pathPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        .elevator-indicator {
+            position: absolute;
+            width: 72px;
+            height: 72px;
+            background: rgba(249, 115, 22, 0.2);
+            border: 3px dashed #f97316;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: elevatorPulse 2s infinite;
+        }
+        
+        @keyframes elevatorPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
+            }
+        }
+        
+        .floor-plan-container {
+            position: relative;
+            background: #f8fafc;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        
+        .route-box {
+            min-height: 120px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .route-box {
+                max-height: 300px;
+            }
+        }
+        
+        .direction-item {
+            transition: all 0.2s ease;
+        }
+        
+        .direction-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateX(4px);
+        }
+        
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #qrcode:hover {
+            transform: scale(1.05);
+        }
+        
+        .hero-section {
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        #qrContainer {
+            transition: all 0.5s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        #qrContainer:not(.hidden) {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 500px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            border-left: 4px solid;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left-color: #10b981;
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.info {
+            border-left-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+    
+    <!-- Header -->
+    <div class="hero-section glass-panel rounded-3xl p-8 mb-8 text-center">
+        <div class="text-7xl mb-4">🏨</div>
+        <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-3">
+            Hotel Hopper
+        </h1>
+        <p class="text-gray-600 text-lg mono">Your Smart Navigation Guide</p>
+        <div class="mt-4 flex justify-center gap-4">
+            <a href="admin.html" class="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-800 text-white rounded-lg hover:opacity-90 transition-all text-sm font-semibold">
+                Admin Panel
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Navigation Controls -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Location Selection -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <span>📍</span> Plan Your Route
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Starting Point</label>
+                        <select id="startLocation" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-all text-gray-700">
+                            <option value="">Select start location</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Destination</label>
+                        <select id="endLocation" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-all text-gray-700">
+                            <option value="">Select destination</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="findRoute()" class="w-full btn-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg">
+                        🧭 Find Route
+                    </button>
+                </div>
+            </div>
+
+            <!-- Floor Selector -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>🏢</span> Floor View
+                </h2>
+                
+                <select id="floorView" onchange="switchFloorView()" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-all text-gray-700">
+                    <option value="">Select floor to view</option>
+                </select>
+            </div>
+
+            <!-- Directions -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>🗺️</span> Directions
+                </h2>
+                
+                <div id="directionsBox" class="route-box space-y-2">
+                    <div class="text-center py-8">
+                        <span class="text-4xl block mb-2">🧭</span>
+                        <p class="text-gray-500 text-sm">Select locations to see directions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div id="qrContainer" class="glass-panel rounded-2xl p-6 hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>📱</span> Share Route
+                </h2>
+                
+                <div id="qrcode" class="mb-4" onclick="downloadQR()" title="Click to download QR code"></div>
+                <p class="text-xs text-gray-500 text-center mono mb-2" id="qrUrl"></p>
+                <button onclick="downloadQR()" class="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:opacity-90 transition-all font-semibold">
+                    📥 Download QR Code
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-2">
+                    Scan or share this QR code to access this route on any device
+                </p>
+            </div>
+        </div>
+
+        <!-- Map Display -->
+        <div class="lg:col-span-2">
+            <div class="glass-panel rounded-2xl p-6">
+                <div class="mb-4">
+                    <h2 class="text-3xl font-bold text-gray-800">Interactive Map</h2>
+                    <p class="text-gray-600 text-sm mono" id="currentFloorName">Select a floor to view</p>
+                </div>
+                
+                <div id="mapContainer" class="floor-plan-container min-h-[600px] flex items-center justify-center">
+                    <div class="text-center">
+                        <span class="text-6xl block mb-4">🗺️</span>
+                        <p class="text-gray-500 text-lg">Select a floor to view the map</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hotelData = { floors: {} };
+        let currentFloorView = null;
+        let currentRoute = null;
+        let lastDataHash = '';
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('hotelHopperData');
+            if (saved) {
+                try {
+                    hotelData = JSON.parse(saved);
+                    if (Object.keys(hotelData.floors).length > 0) {
+                        populateLocations();
+                        populateFloorSelector();
+                        syncData();
+                        showNotification('Hotel data loaded successfully!', 'success');
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error parsing saved data:', e);
+                    showNotification('Error loading hotel data', 'error');
+                }
+            }
+            
+            // Show error message if no data
+            document.getElementById('mapContainer').innerHTML = `
+                <div class="text-center py-16">
+                    <span class="text-6xl block mb-4">⚠️</span>
+                    <p class="text-gray-600 text-lg mb-2">No hotel data found</p>
+                    <p class="text-gray-500 text-sm mb-6">Please set up the hotel navigation system using the admin panel first</p>
+                    <a href="admin.html" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-all font-semibold">
+                        Go to Admin Panel
+                    </a>
+                </div>
+            `;
+        }
+
+        // Add this function to index.html (inside the script tag)
 
 // Enhanced data loading with multiple fallbacks
 function loadData() {
@@ -156,3 +549,570 @@ window.onload = function() {
     loadData();
     loadRouteFromURL();
 };
+        
+        // Populate location dropdowns
+        function populateLocations() {
+            const startSelect = document.getElementById('startLocation');
+            const endSelect = document.getElementById('endLocation');
+            
+            startSelect.innerHTML = '<option value="">Select start location</option>';
+            endSelect.innerHTML = '<option value="">Select destination</option>';
+            
+            Object.keys(hotelData.floors).forEach(floorNum => {
+                const floor = hotelData.floors[floorNum];
+                floor.markers.forEach(marker => {
+                    const option1 = document.createElement('option');
+                    const option2 = document.createElement('option');
+                    option1.value = option2.value = `${floorNum}-${marker.id}`;
+                    option1.textContent = option2.textContent = `${marker.icon} ${marker.name} (${floor.name})`;
+                    startSelect.appendChild(option1);
+                    endSelect.appendChild(option2);
+                });
+            });
+        }
+
+        // Populate floor selector
+        function populateFloorSelector() {
+            const selector = document.getElementById('floorView');
+            selector.innerHTML = '<option value="">Select floor to view</option>';
+            
+            Object.keys(hotelData.floors).forEach(floorNum => {
+                const floor = hotelData.floors[floorNum];
+                const option = document.createElement('option');
+                option.value = floorNum;
+                option.textContent = floor.name;
+                selector.appendChild(option);
+            });
+        }
+
+        // Switch floor view
+        function switchFloorView() {
+            const selector = document.getElementById('floorView');
+            currentFloorView = selector.value;
+            
+            if (currentFloorView) {
+                renderMap();
+                document.getElementById('currentFloorName').textContent = hotelData.floors[currentFloorView].name;
+            } else {
+                document.getElementById('currentFloorName').textContent = 'Select a floor to view';
+            }
+        }
+
+        // Render map
+        function renderMap() {
+            const container = document.getElementById('mapContainer');
+            container.innerHTML = '';
+            
+            const floor = hotelData.floors[currentFloorView];
+            if (!floor || !floor.floorPlanUrl) {
+                container.innerHTML = '<div class="text-center py-16"><span class="text-6xl block mb-4">🗺️</span><p class="text-gray-500">No floor plan available</p></div>';
+                return;
+            }
+            
+            const img = document.createElement('img');
+            img.src = floor.floorPlanUrl;
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            container.appendChild(img);
+            
+            renderConnections();
+            renderMarkers();
+        }
+
+        // Render connections
+        function renderConnections() {
+            const container = document.getElementById('mapContainer');
+            const floor = hotelData.floors[currentFloorView];
+            
+            // Clear existing connections
+            const existingLines = container.querySelectorAll('.connection-line');
+            existingLines.forEach(line => line.remove());
+            
+            // Regular connections
+            floor.connections.forEach(([id1, id2]) => {
+                const marker1 = floor.markers.find(m => m.id === id1);
+                const marker2 = floor.markers.find(m => m.id === id2);
+                
+                if (marker1 && marker2) {
+                    drawLine(container, marker1, marker2, false);
+                }
+            });
+            
+            // Highlight active route if on this floor
+            if (currentRoute) {
+                currentRoute.forEach((segment, index) => {
+                    if (segment.floor === currentFloorView && index < currentRoute.length - 1) {
+                        const nextSegment = currentRoute[index + 1];
+                        if (nextSegment.floor === currentFloorView) {
+                            const marker1 = floor.markers.find(m => m.id === segment.markerId);
+                            const marker2 = floor.markers.find(m => m.id === nextSegment.markerId);
+                            if (marker1 && marker2) {
+                                drawLine(container, marker1, marker2, true, segment.action === 'elevator');
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Draw line between markers
+        function drawLine(container, marker1, marker2, active = false, isElevator = false) {
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            if (active) {
+                line.classList.add('active');
+                if (isElevator) line.classList.add('elevator');
+            }
+            
+            const dx = marker2.x - marker1.x;
+            const dy = marker2.y - marker1.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            line.style.left = marker1.x + '%';
+            line.style.top = marker1.y + '%';
+            line.style.width = length + '%';
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            container.appendChild(line);
+        }
+
+        // Render markers
+        function renderMarkers() {
+            const container = document.getElementById('mapContainer');
+            const floor = hotelData.floors[currentFloorView];
+            
+            // Clear existing markers
+            const existingMarkers = container.querySelectorAll('.marker, .elevator-indicator');
+            existingMarkers.forEach(marker => marker.remove());
+            
+            floor.markers.forEach(marker => {
+                const markerEl = document.createElement('div');
+                markerEl.className = 'marker';
+                markerEl.style.left = marker.x + '%';
+                markerEl.style.top = marker.y + '%';
+                markerEl.innerHTML = marker.icon;
+                markerEl.title = marker.name;
+                
+                // Highlight start/end if in route
+                if (currentRoute) {
+                    const routeStart = currentRoute[0];
+                    const routeEnd = currentRoute[currentRoute.length - 1];
+                    
+                    if (routeStart.floor === currentFloorView && routeStart.markerId === marker.id) {
+                        markerEl.classList.add('start');
+                    }
+                    if (routeEnd.floor === currentFloorView && routeEnd.markerId === marker.id) {
+                        markerEl.classList.add('end');
+                    }
+                    
+                    // Show elevator indicators
+                    if (marker.icon === '🛗' && currentRoute.some(seg => seg.floor === currentFloorView && seg.markerId === marker.id && seg.action === 'elevator')) {
+                        const elevatorIndicator = document.createElement('div');
+                        elevatorIndicator.className = 'elevator-indicator';
+                        elevatorIndicator.style.left = marker.x + '%';
+                        elevatorIndicator.style.top = marker.y + '%';
+                        container.appendChild(elevatorIndicator);
+                    }
+                }
+                
+                container.appendChild(markerEl);
+            });
+        }
+
+        // Pathfinding algorithm (Dijkstra's)
+        function findRoute() {
+            const startVal = document.getElementById('startLocation').value;
+            const endVal = document.getElementById('endLocation').value;
+            
+            if (!startVal || !endVal) {
+                showNotification('Please select both start and end locations', 'error');
+                return;
+            }
+            
+            const [startFloor, startMarkerId] = startVal.split('-');
+            const [endFloor, endMarkerId] = endVal.split('-');
+            
+            // Build graph
+            const graph = {};
+            const nodeToInfo = {};
+            
+            Object.keys(hotelData.floors).forEach(floorNum => {
+                const floor = hotelData.floors[floorNum];
+                
+                floor.markers.forEach(marker => {
+                    const nodeId = `${floorNum}-${marker.id}`;
+                    graph[nodeId] = [];
+                    nodeToInfo[nodeId] = { floor: floorNum, marker: marker };
+                });
+                
+                floor.connections.forEach(([id1, id2]) => {
+                    const node1 = `${floorNum}-${id1}`;
+                    const node2 = `${floorNum}-${id2}`;
+                    
+                    const marker1 = floor.markers.find(m => m.id === id1);
+                    const marker2 = floor.markers.find(m => m.id === id2);
+                    
+                    if (marker1 && marker2) {
+                        const distance = Math.sqrt(
+                            Math.pow(marker2.x - marker1.x, 2) +
+                            Math.pow(marker2.y - marker1.y, 2)
+                        );
+                        
+                        graph[node1].push({ node: node2, distance });
+                        graph[node2].push({ node: node1, distance });
+                    }
+                });
+            });
+            
+            // Add elevator connections
+            Object.keys(hotelData.floors).forEach(floor1 => {
+                Object.keys(hotelData.floors).forEach(floor2 => {
+                    if (floor1 !== floor2) {
+                        const elevators1 = hotelData.floors[floor1].markers.filter(m => m.icon === '🛗');
+                        const elevators2 = hotelData.floors[floor2].markers.filter(m => m.icon === '🛗');
+                        
+                        elevators1.forEach(e1 => {
+                            elevators2.forEach(e2 => {
+                                const node1 = `${floor1}-${e1.id}`;
+                                const node2 = `${floor2}-${e2.id}`;
+                                graph[node1].push({ node: node2, distance: 10, elevator: true });
+                            });
+                        });
+                    }
+                });
+            });
+            
+            // Dijkstra's algorithm
+            const distances = {};
+            const previous = {};
+            const unvisited = new Set();
+            
+            Object.keys(graph).forEach(node => {
+                distances[node] = Infinity;
+                unvisited.add(node);
+            });
+            
+            const startNode = `${startFloor}-${startMarkerId}`;
+            const endNode = `${endFloor}-${endMarkerId}`;
+            distances[startNode] = 0;
+            
+            while (unvisited.size > 0) {
+                let current = null;
+                let minDist = Infinity;
+                
+                unvisited.forEach(node => {
+                    if (distances[node] < minDist) {
+                        minDist = distances[node];
+                        current = node;
+                    }
+                });
+                
+                if (current === endNode || minDist === Infinity) break;
+                
+                unvisited.delete(current);
+                
+                graph[current].forEach(({ node, distance, elevator }) => {
+                    if (unvisited.has(node)) {
+                        const alt = distances[current] + distance;
+                        if (alt < distances[node]) {
+                            distances[node] = alt;
+                            previous[node] = { node: current, elevator };
+                        }
+                    }
+                });
+            }
+            
+            // Reconstruct path
+            const path = [];
+            let current = endNode;
+            
+            while (current) {
+                const [floor, markerId] = current.split('-');
+                const marker = hotelData.floors[floor].markers.find(m => m.id === markerId);
+                
+                const isElevator = previous[current]?.elevator || false;
+                
+                path.unshift({
+                    floor,
+                    markerId,
+                    marker,
+                    action: isElevator ? 'elevator' : 'walk'
+                });
+                
+                current = previous[current]?.node;
+            }
+            
+            if (path.length === 0 || path[0].floor !== startFloor) {
+                showNotification('No valid route found between these locations', 'error');
+                return;
+            }
+            
+            currentRoute = path;
+            displayRoute(path);
+            
+            // Show QR container when route is found
+            const qrContainer = document.getElementById('qrContainer');
+            qrContainer.classList.remove('hidden');
+            
+            generateQR(startVal, endVal);
+            
+            // Switch to start floor
+            document.getElementById('floorView').value = startFloor;
+            switchFloorView();
+            
+            showNotification('Route found successfully!', 'success');
+        }
+
+        // Display route directions
+        function displayRoute(path) {
+            const container = document.getElementById('directionsBox');
+            container.innerHTML = '';
+            
+            if (!path || path.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No route found</p>';
+                return;
+            }
+            
+            const directions = [];
+            
+            // Start
+            directions.push({
+                text: `Start at ${path[0].marker.name} on ${hotelData.floors[path[0].floor].name}`,
+                type: 'start'
+            });
+            
+            // Middle steps
+            for (let i = 1; i < path.length; i++) {
+                const current = path[i];
+                const previous = path[i - 1];
+                
+                if (current.action === 'elevator') {
+                    directions.push({
+                        text: `Take the elevator to ${hotelData.floors[current.floor].name}`,
+                        type: 'elevator'
+                    });
+                } else if (current.floor === previous.floor) {
+                    // Calculate turn direction
+                    if (i < path.length - 1) {
+                        const next = path[i + 1];
+                        const turn = calculateTurn(previous.marker, current.marker, next.marker);
+                        directions.push({
+                            text: `${turn} toward ${current.marker.name}`,
+                            type: 'walk'
+                        });
+                    }
+                }
+            }
+            
+            // End
+            const lastStep = path[path.length - 1];
+            directions.push({
+                text: `Arrive at ${lastStep.marker.name}`,
+                type: 'end'
+            });
+            
+            directions.forEach((dir, index) => {
+                const item = document.createElement('div');
+                item.className = 'direction-item p-3 rounded-lg border-l-4 mb-2';
+                
+                let borderColor = 'border-gray-300';
+                let textStyle = 'text-gray-700';
+                
+                if (dir.type === 'start') {
+                    borderColor = 'border-green-500';
+                    textStyle = 'font-bold text-gray-800';
+                } else if (dir.type === 'elevator') {
+                    borderColor = 'border-orange-500';
+                    textStyle = 'text-orange-600 font-semibold';
+                } else if (dir.type === 'end') {
+                    borderColor = 'border-blue-500';
+                    textStyle = 'font-bold text-green-600';
+                }
+                
+                item.className += ` ${borderColor}`;
+                item.innerHTML = `<span class="${textStyle}">${index + 1}. ${dir.text}</span>`;
+                container.appendChild(item);
+            });
+        }
+
+        // Calculate turn direction
+        function calculateTurn(p1, p2, p3) {
+            const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
+            const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+            
+            const cross = v1.x * v2.y - v1.y * v2.x;
+            
+            if (Math.abs(cross) < 0.1) return 'Go straight';
+            return cross > 0 ? 'Turn right' : 'Turn left';
+        }
+
+        // Generate QR code
+        function generateQR(start, end) {
+            const qrContainer = document.getElementById('qrContainer');
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = '';
+            
+            try {
+                const url = `${window.location.origin}${window.location.pathname}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&t=${Date.now()}`;
+                
+                // Generate QR code
+                new QRCode(qrDiv, {
+                    text: url,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#667eea',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                document.getElementById('qrUrl').textContent = url;
+                qrContainer.classList.remove('hidden');
+                
+                // Add click to download functionality
+                qrDiv.onclick = downloadQR;
+            } catch (e) {
+                console.error('QR generation failed:', e);
+                showNotification('Failed to generate QR code', 'error');
+            }
+        }
+
+        // Download QR code
+        function downloadQR() {
+            const qrDiv = document.getElementById('qrcode');
+            const canvas = qrDiv.querySelector('canvas');
+            
+            if (canvas) {
+                const link = document.createElement('a');
+                const startName = document.getElementById('startLocation').options[document.getElementById('startLocation').selectedIndex].text;
+                const endName = document.getElementById('endLocation').options[document.getElementById('endLocation').selectedIndex].text;
+                const fileName = `hotel-route-${startName.replace(/\s+/g, '-')}-to-${endName.replace(/\s+/g, '-')}.png`.toLowerCase();
+                
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('QR code downloaded successfully!', 'success');
+            } else {
+                showNotification('QR code not generated yet. Please find a route first.', 'error');
+            }
+        }
+
+        // Load route from URL parameters
+        function loadRouteFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const start = params.get('start');
+            const end = params.get('end');
+            
+            if (start && end) {
+                document.getElementById('startLocation').value = start;
+                document.getElementById('endLocation').value = end;
+                setTimeout(() => findRoute(), 1000);
+                showNotification('Loading route from shared link...', 'info');
+            }
+        }
+
+        // Function to sync data between tabs
+        function syncData() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'hotelHopperData') {
+                    try {
+                        hotelData = JSON.parse(e.newValue);
+                        if (currentFloorView) {
+                            renderMap();
+                        }
+                        populateLocations();
+                        populateFloorSelector();
+                        showNotification('Hotel data updated from admin panel', 'info');
+                    } catch (err) {
+                        console.error('Error syncing data:', err);
+                    }
+                }
+            });
+        }
+
+        // Check for updates from admin panel
+        function checkForUpdates() {
+            const currentData = localStorage.getItem('hotelHopperData');
+            if (currentData) {
+                const currentHash = btoa(currentData).substring(0, 32);
+                if (lastDataHash && currentHash !== lastDataHash) {
+                    // Data changed, reload
+                    loadData();
+                    if (currentRoute) {
+                        // Recalculate current route
+                        const startVal = document.getElementById('startLocation').value;
+                        const endVal = document.getElementById('endLocation').value;
+                        if (startVal && endVal) {
+                            setTimeout(() => findRoute(), 100);
+                        }
+                    }
+                }
+                lastDataHash = currentHash;
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                    <span class="text-gray-800 font-medium">${message}</span>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 5000);
+        }
+
+        // Initialize
+        window.onload = function() {
+            loadData();
+            loadRouteFromURL();
+            syncData();
+            
+            // Check for updates every 2 seconds
+            setInterval(checkForUpdates, 2000);
+            
+            // Auto-refresh data every 30 seconds
+            setInterval(() => {
+                if (Object.keys(hotelData.floors).length > 0) {
+                    const currentData = localStorage.getItem('hotelHopperData');
+                    if (currentData) {
+                        try {
+                            hotelData = JSON.parse(currentData);
+                            if (currentFloorView) {
+                                renderMap();
+                            }
+                            populateLocations();
+                            populateFloorSelector();
+                        } catch (e) {
+                            console.error('Error refreshing data:', e);
+                        }
+                    }
+                }
+            }, 30000);
+        };
+    </script>
+</body>
+</html>
