@@ -4,17 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel Hopper Navigator</title>
-  <!-- Replace the Tailwind CDN link with this -->
-<script>
-  tailwind.config = {
-    important: true,
-    corePlugins: {
-      preflight: false,
-    }
-  }
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
-    
+    <!-- Using unpkg CDN instead of cdn.tailwindcss.com to avoid production warning -->
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -371,246 +362,220 @@
 
         // Load data from localStorage
         function loadData() {
-            const saved = localStorage.getItem('hotelHopperData');
-            if (saved) {
+            console.log('Attempting to load hotel data...');
+            
+            // Try multiple data sources
+            let savedData = null;
+            
+            // Try localStorage first
+            try {
+                savedData = localStorage.getItem('hotelHopperData');
+            } catch (e) {
+                console.log('localStorage access error, trying sessionStorage');
+            }
+            
+            // If localStorage fails, try sessionStorage
+            if (!savedData) {
                 try {
-                    hotelData = JSON.parse(saved);
-                    if (Object.keys(hotelData.floors).length > 0) {
-                        populateLocations();
-                        populateFloorSelector();
-                        syncData();
-                        showNotification('Hotel data loaded successfully!', 'success');
-                        return;
-                    }
+                    savedData = sessionStorage.getItem('hotelHopperData');
                 } catch (e) {
-                    console.error('Error parsing saved data:', e);
-                    showNotification('Error loading hotel data', 'error');
+                    console.log('sessionStorage access error');
                 }
             }
             
-            // Show error message if no data
-            document.getElementById('mapContainer').innerHTML = `
+            if (savedData) {
+                try {
+                    hotelData = JSON.parse(savedData);
+                    console.log('Data loaded successfully, floors:', Object.keys(hotelData.floors).length);
+                    
+                    if (Object.keys(hotelData.floors).length > 0) {
+                        populateLocations();
+                        populateFloorSelector();
+                        setupDataSync();
+                        showNotification('Hotel data loaded successfully!', 'success');
+                        
+                        // Check if we need to load from URL
+                        loadRouteFromURL();
+                        return;
+                    } else {
+                        showDataNotFoundMessage();
+                    }
+                } catch (e) {
+                    console.log('Error parsing saved data:', e.message);
+                    showNotification('Error loading hotel data', 'error');
+                    showDataNotFoundMessage();
+                }
+            } else {
+                showDataNotFoundMessage();
+            }
+        }
+
+        // Setup data synchronization
+        function setupDataSync() {
+            // Listen for localStorage changes
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'hotelHopperData') {
+                    console.log('Storage event detected');
+                    handleDataUpdate(e.newValue);
+                }
+            });
+            
+            // Listen for BroadcastChannel messages
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const channel = new BroadcastChannel('hotel-hopper-data');
+                    channel.onmessage = function(event) {
+                        if (event.data.type === 'data-update') {
+                            console.log('BroadcastChannel update received');
+                            hotelData = event.data.data;
+                            refreshUI();
+                            showNotification('Data updated from admin panel', 'info');
+                        }
+                    };
+                } catch (e) {
+                    console.log('BroadcastChannel not available');
+                }
+            }
+            
+            // Poll for updates every 5 seconds
+            setInterval(checkForDataUpdates, 5000);
+        }
+
+        // Handle data updates
+        function handleDataUpdate(newData) {
+            if (newData) {
+                try {
+                    hotelData = JSON.parse(newData);
+                    refreshUI();
+                    showNotification('Data updated from admin panel', 'info');
+                } catch (e) {
+                    console.log('Error updating data:', e.message);
+                }
+            }
+        }
+
+        // Check for data updates
+        function checkForDataUpdates() {
+            try {
+                const currentData = localStorage.getItem('hotelHopperData');
+                if (currentData) {
+                    const newHash = btoa(currentData).substring(0, 32);
+                    if (lastDataHash && newHash !== lastDataHash) {
+                        console.log('Data changed, updating...');
+                        hotelData = JSON.parse(currentData);
+                        refreshUI();
+                    }
+                    lastDataHash = newHash;
+                }
+            } catch (e) {
+                console.log('Error checking for updates:', e.message);
+            }
+        }
+
+        // Refresh UI after data update
+        function refreshUI() {
+            populateLocations();
+            populateFloorSelector();
+            if (currentFloorView) {
+                renderMap();
+            }
+            if (currentRoute) {
+                // Recalculate current route if exists
+                const startVal = document.getElementById('startLocation').value;
+                const endVal = document.getElementById('endLocation').value;
+                if (startVal && endVal) {
+                    setTimeout(() => findRoute(), 100);
+                }
+            }
+        }
+
+        // Show data not found message
+        function showDataNotFoundMessage() {
+            const container = document.getElementById('mapContainer');
+            container.innerHTML = `
                 <div class="text-center py-16">
                     <span class="text-6xl block mb-4">⚠️</span>
                     <p class="text-gray-600 text-lg mb-2">No hotel data found</p>
                     <p class="text-gray-500 text-sm mb-6">Please set up the hotel navigation system using the admin panel first</p>
-                    <a href="admin.html" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-all font-semibold">
-                        Go to Admin Panel
-                    </a>
+                    <div class="space-y-3">
+                        <a href="admin.html" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-all font-semibold">
+                            Go to Admin Panel
+                        </a>
+                        <p class="text-gray-400 text-xs">After setting up in admin, refresh this page</p>
+                        <button onclick="loadData()" class="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:opacity-90 transition-all text-sm">
+                            🔄 Try Loading Again
+                        </button>
+                    </div>
                 </div>
             `;
         }
-
-        // Add this function to index.html (inside the script tag)
-
-// Enhanced data loading with multiple fallbacks
-function loadData() {
-    console.log('Attempting to load hotel data...');
-    
-    // Try multiple data sources in order
-    const sources = [
-        { name: 'localStorage', data: localStorage.getItem('hotelHopperData') },
-        { name: 'sessionStorage', data: sessionStorage.getItem('hotelHopperData') },
-        { name: 'cookie', data: getCookie('hotelHopperData') }
-    ];
-    
-    let loadedData = null;
-    
-    for (const source of sources) {
-        if (source.data) {
-            try {
-                loadedData = JSON.parse(source.data);
-                console.log(`Loaded data from ${source.name}`);
-                break;
-            } catch (e) {
-                console.error(`Error parsing data from ${source.name}:`, e);
-            }
-        }
-    }
-    
-    if (loadedData) {
-        hotelData = loadedData;
-        if (Object.keys(hotelData.floors).length > 0) {
-            populateLocations();
-            populateFloorSelector();
-            setupDataSync();
-            showNotification('Hotel data loaded successfully!', 'success');
-            return;
-        }
-    }
-    
-    // Show error message if no data
-    showDataNotFoundMessage();
-}
-
-// Get cookie value
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-    return null;
-}
-
-// Setup data synchronization
-function setupDataSync() {
-    // Listen for localStorage changes
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'hotelHopperData') {
-            console.log('Storage event detected');
-            handleDataUpdate(e.newValue);
-        }
-    });
-    
-    // Listen for BroadcastChannel messages
-    if (typeof BroadcastChannel !== 'undefined') {
-        try {
-            const channel = new BroadcastChannel('hotel-hopper-data');
-            channel.onmessage = function(event) {
-                if (event.data.type === 'data-update') {
-                    console.log('BroadcastChannel update received');
-                    hotelData = event.data.data;
-                    refreshUI();
-                    showNotification('Data updated from admin panel', 'info');
-                }
-            };
-        } catch (e) {
-            console.log('BroadcastChannel not available');
-        }
-    }
-    
-    // Poll for updates every 2 seconds
-    setInterval(checkForDataUpdates, 2000);
-}
-
-// Handle data updates
-function handleDataUpdate(newData) {
-    if (newData) {
-        try {
-            hotelData = JSON.parse(newData);
-            refreshUI();
-            showNotification('Data updated from admin panel', 'info');
-        } catch (e) {
-            console.error('Error updating data:', e);
-        }
-    }
-}
-
-// Refresh UI after data update
-function refreshUI() {
-    populateLocations();
-    populateFloorSelector();
-    if (currentFloorView) {
-        renderMap();
-    }
-    if (currentRoute) {
-        // Recalculate current route if exists
-        const startVal = document.getElementById('startLocation').value;
-        const endVal = document.getElementById('endLocation').value;
-        if (startVal && endVal) {
-            setTimeout(() => findRoute(), 100);
-        }
-    }
-}
-
-// Check for data updates
-function checkForDataUpdates() {
-    const currentData = localStorage.getItem('hotelHopperData');
-    if (currentData) {
-        try {
-            const newData = JSON.parse(currentData);
-            const newHash = JSON.stringify(newData);
-            const oldHash = JSON.stringify(hotelData);
-            
-            if (newHash !== oldHash) {
-                console.log('Data changed, updating...');
-                hotelData = newData;
-                refreshUI();
-            }
-        } catch (e) {
-            console.error('Error checking for updates:', e);
-        }
-    }
-}
-
-// Show data not found message
-function showDataNotFoundMessage() {
-    const container = document.getElementById('mapContainer');
-    container.innerHTML = `
-        <div class="text-center py-16">
-            <span class="text-6xl block mb-4">⚠️</span>
-            <p class="text-gray-600 text-lg mb-2">No hotel data found</p>
-            <p class="text-gray-500 text-sm mb-6">Please set up the hotel navigation system using the admin panel first</p>
-            <div class="space-y-3">
-                <a href="admin.html" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-all font-semibold">
-                    Go to Admin Panel
-                </a>
-                <p class="text-gray-400 text-xs">After setting up in admin, refresh this page</p>
-                <button onclick="loadData()" class="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:opacity-90 transition-all text-sm">
-                    🔄 Try Loading Again
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// Initialize
-window.onload = function() {
-    console.log('Initializing Hotel Hopper...');
-    loadData();
-    loadRouteFromURL();
-};
         
         // Populate location dropdowns
         function populateLocations() {
             const startSelect = document.getElementById('startLocation');
             const endSelect = document.getElementById('endLocation');
             
+            if (!startSelect || !endSelect) return;
+            
             startSelect.innerHTML = '<option value="">Select start location</option>';
             endSelect.innerHTML = '<option value="">Select destination</option>';
             
             Object.keys(hotelData.floors).forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
-                floor.markers.forEach(marker => {
-                    const option1 = document.createElement('option');
-                    const option2 = document.createElement('option');
-                    option1.value = option2.value = `${floorNum}-${marker.id}`;
-                    option1.textContent = option2.textContent = `${marker.icon} ${marker.name} (${floor.name})`;
-                    startSelect.appendChild(option1);
-                    endSelect.appendChild(option2);
-                });
+                if (floor && floor.markers) {
+                    floor.markers.forEach(marker => {
+                        const option1 = document.createElement('option');
+                        const option2 = document.createElement('option');
+                        option1.value = option2.value = `${floorNum}-${marker.id}`;
+                        option1.textContent = option2.textContent = `${marker.icon} ${marker.name} (${floor.name})`;
+                        startSelect.appendChild(option1);
+                        endSelect.appendChild(option2);
+                    });
+                }
             });
         }
 
         // Populate floor selector
         function populateFloorSelector() {
             const selector = document.getElementById('floorView');
+            if (!selector) return;
+            
             selector.innerHTML = '<option value="">Select floor to view</option>';
             
             Object.keys(hotelData.floors).forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
-                const option = document.createElement('option');
-                option.value = floorNum;
-                option.textContent = floor.name;
-                selector.appendChild(option);
+                if (floor) {
+                    const option = document.createElement('option');
+                    option.value = floorNum;
+                    option.textContent = floor.name;
+                    selector.appendChild(option);
+                }
             });
         }
 
         // Switch floor view
         function switchFloorView() {
             const selector = document.getElementById('floorView');
+            if (!selector) return;
+            
             currentFloorView = selector.value;
             
-            if (currentFloorView) {
+            if (currentFloorView && hotelData.floors[currentFloorView]) {
                 renderMap();
                 document.getElementById('currentFloorName').textContent = hotelData.floors[currentFloorView].name;
             } else {
-                document.getElementById('currentFloorName').textContent = 'Select a floor to view';
+                const floorNameEl = document.getElementById('currentFloorName');
+                if (floorNameEl) {
+                    floorNameEl.textContent = 'Select a floor to view';
+                }
             }
         }
 
         // Render map
         function renderMap() {
             const container = document.getElementById('mapContainer');
+            if (!container) return;
+            
             container.innerHTML = '';
             
             const floor = hotelData.floors[currentFloorView];
@@ -635,19 +600,23 @@ window.onload = function() {
             const container = document.getElementById('mapContainer');
             const floor = hotelData.floors[currentFloorView];
             
+            if (!container || !floor) return;
+            
             // Clear existing connections
             const existingLines = container.querySelectorAll('.connection-line');
             existingLines.forEach(line => line.remove());
             
             // Regular connections
-            floor.connections.forEach(([id1, id2]) => {
-                const marker1 = floor.markers.find(m => m.id === id1);
-                const marker2 = floor.markers.find(m => m.id === id2);
-                
-                if (marker1 && marker2) {
-                    drawLine(container, marker1, marker2, false);
-                }
-            });
+            if (floor.connections) {
+                floor.connections.forEach(([id1, id2]) => {
+                    const marker1 = floor.markers.find(m => m.id === id1);
+                    const marker2 = floor.markers.find(m => m.id === id2);
+                    
+                    if (marker1 && marker2) {
+                        drawLine(container, marker1, marker2, false);
+                    }
+                });
+            }
             
             // Highlight active route if on this floor
             if (currentRoute) {
@@ -693,6 +662,8 @@ window.onload = function() {
             const container = document.getElementById('mapContainer');
             const floor = hotelData.floors[currentFloorView];
             
+            if (!container || !floor || !floor.markers) return;
+            
             // Clear existing markers
             const existingMarkers = container.querySelectorAll('.marker, .elevator-indicator');
             existingMarkers.forEach(marker => marker.remove());
@@ -733,8 +704,16 @@ window.onload = function() {
 
         // Pathfinding algorithm (Dijkstra's)
         function findRoute() {
-            const startVal = document.getElementById('startLocation').value;
-            const endVal = document.getElementById('endLocation').value;
+            const startSelect = document.getElementById('startLocation');
+            const endSelect = document.getElementById('endLocation');
+            
+            if (!startSelect || !endSelect) {
+                showNotification('Location selectors not found', 'error');
+                return;
+            }
+            
+            const startVal = startSelect.value;
+            const endVal = endSelect.value;
             
             if (!startVal || !endVal) {
                 showNotification('Please select both start and end locations', 'error');
@@ -750,6 +729,7 @@ window.onload = function() {
             
             Object.keys(hotelData.floors).forEach(floorNum => {
                 const floor = hotelData.floors[floorNum];
+                if (!floor || !floor.markers) return;
                 
                 floor.markers.forEach(marker => {
                     const nodeId = `${floorNum}-${marker.id}`;
@@ -757,39 +737,46 @@ window.onload = function() {
                     nodeToInfo[nodeId] = { floor: floorNum, marker: marker };
                 });
                 
-                floor.connections.forEach(([id1, id2]) => {
-                    const node1 = `${floorNum}-${id1}`;
-                    const node2 = `${floorNum}-${id2}`;
-                    
-                    const marker1 = floor.markers.find(m => m.id === id1);
-                    const marker2 = floor.markers.find(m => m.id === id2);
-                    
-                    if (marker1 && marker2) {
-                        const distance = Math.sqrt(
-                            Math.pow(marker2.x - marker1.x, 2) +
-                            Math.pow(marker2.y - marker1.y, 2)
-                        );
+                if (floor.connections) {
+                    floor.connections.forEach(([id1, id2]) => {
+                        const node1 = `${floorNum}-${id1}`;
+                        const node2 = `${floorNum}-${id2}`;
                         
-                        graph[node1].push({ node: node2, distance });
-                        graph[node2].push({ node: node1, distance });
-                    }
-                });
+                        const marker1 = floor.markers.find(m => m.id === id1);
+                        const marker2 = floor.markers.find(m => m.id === id2);
+                        
+                        if (marker1 && marker2) {
+                            const distance = Math.sqrt(
+                                Math.pow(marker2.x - marker1.x, 2) +
+                                Math.pow(marker2.y - marker1.y, 2)
+                            );
+                            
+                            graph[node1].push({ node: node2, distance });
+                            graph[node2].push({ node: node1, distance });
+                        }
+                    });
+                }
             });
             
             // Add elevator connections
             Object.keys(hotelData.floors).forEach(floor1 => {
                 Object.keys(hotelData.floors).forEach(floor2 => {
                     if (floor1 !== floor2) {
-                        const elevators1 = hotelData.floors[floor1].markers.filter(m => m.icon === '🛗');
-                        const elevators2 = hotelData.floors[floor2].markers.filter(m => m.icon === '🛗');
+                        const floor1Obj = hotelData.floors[floor1];
+                        const floor2Obj = hotelData.floors[floor2];
                         
-                        elevators1.forEach(e1 => {
-                            elevators2.forEach(e2 => {
-                                const node1 = `${floor1}-${e1.id}`;
-                                const node2 = `${floor2}-${e2.id}`;
-                                graph[node1].push({ node: node2, distance: 10, elevator: true });
+                        if (floor1Obj && floor2Obj && floor1Obj.markers && floor2Obj.markers) {
+                            const elevators1 = floor1Obj.markers.filter(m => m.icon === '🛗');
+                            const elevators2 = floor2Obj.markers.filter(m => m.icon === '🛗');
+                            
+                            elevators1.forEach(e1 => {
+                                elevators2.forEach(e2 => {
+                                    const node1 = `${floor1}-${e1.id}`;
+                                    const node2 = `${floor2}-${e2.id}`;
+                                    graph[node1].push({ node: node2, distance: 10, elevator: true });
+                                });
                             });
-                        });
+                        }
                     }
                 });
             });
@@ -823,15 +810,17 @@ window.onload = function() {
                 
                 unvisited.delete(current);
                 
-                graph[current].forEach(({ node, distance, elevator }) => {
-                    if (unvisited.has(node)) {
-                        const alt = distances[current] + distance;
-                        if (alt < distances[node]) {
-                            distances[node] = alt;
-                            previous[node] = { node: current, elevator };
+                if (graph[current]) {
+                    graph[current].forEach(({ node, distance, elevator }) => {
+                        if (unvisited.has(node)) {
+                            const alt = distances[current] + distance;
+                            if (alt < distances[node]) {
+                                distances[node] = alt;
+                                previous[node] = { node: current, elevator };
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
             
             // Reconstruct path
@@ -840,7 +829,8 @@ window.onload = function() {
             
             while (current) {
                 const [floor, markerId] = current.split('-');
-                const marker = hotelData.floors[floor].markers.find(m => m.id === markerId);
+                const floorObj = hotelData.floors[floor];
+                const marker = floorObj ? floorObj.markers.find(m => m.id === markerId) : null;
                 
                 const isElevator = previous[current]?.elevator || false;
                 
@@ -854,7 +844,7 @@ window.onload = function() {
                 current = previous[current]?.node;
             }
             
-            if (path.length === 0 || path[0].floor !== startFloor) {
+            if (path.length === 0 || !path[0].marker) {
                 showNotification('No valid route found between these locations', 'error');
                 return;
             }
@@ -864,13 +854,18 @@ window.onload = function() {
             
             // Show QR container when route is found
             const qrContainer = document.getElementById('qrContainer');
-            qrContainer.classList.remove('hidden');
+            if (qrContainer) {
+                qrContainer.classList.remove('hidden');
+            }
             
             generateQR(startVal, endVal);
             
             // Switch to start floor
-            document.getElementById('floorView').value = startFloor;
-            switchFloorView();
+            const floorViewSelect = document.getElementById('floorView');
+            if (floorViewSelect) {
+                floorViewSelect.value = startFloor;
+                switchFloorView();
+            }
             
             showNotification('Route found successfully!', 'success');
         }
@@ -878,6 +873,8 @@ window.onload = function() {
         // Display route directions
         function displayRoute(path) {
             const container = document.getElementById('directionsBox');
+            if (!container) return;
+            
             container.innerHTML = '';
             
             if (!path || path.length === 0) {
@@ -949,6 +946,8 @@ window.onload = function() {
 
         // Calculate turn direction
         function calculateTurn(p1, p2, p3) {
+            if (!p1 || !p2 || !p3) return 'Go straight';
+            
             const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
             const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
             
@@ -962,6 +961,9 @@ window.onload = function() {
         function generateQR(start, end) {
             const qrContainer = document.getElementById('qrContainer');
             const qrDiv = document.getElementById('qrcode');
+            
+            if (!qrDiv || !qrContainer) return;
+            
             qrDiv.innerHTML = '';
             
             try {
@@ -977,13 +979,16 @@ window.onload = function() {
                     correctLevel: QRCode.CorrectLevel.H
                 });
                 
-                document.getElementById('qrUrl').textContent = url;
+                const qrUrlEl = document.getElementById('qrUrl');
+                if (qrUrlEl) {
+                    qrUrlEl.textContent = url;
+                }
                 qrContainer.classList.remove('hidden');
                 
                 // Add click to download functionality
                 qrDiv.onclick = downloadQR;
             } catch (e) {
-                console.error('QR generation failed:', e);
+                console.log('QR generation failed:', e.message);
                 showNotification('Failed to generate QR code', 'error');
             }
         }
@@ -991,21 +996,39 @@ window.onload = function() {
         // Download QR code
         function downloadQR() {
             const qrDiv = document.getElementById('qrcode');
+            if (!qrDiv) return;
+            
             const canvas = qrDiv.querySelector('canvas');
             
             if (canvas) {
-                const link = document.createElement('a');
-                const startName = document.getElementById('startLocation').options[document.getElementById('startLocation').selectedIndex].text;
-                const endName = document.getElementById('endLocation').options[document.getElementById('endLocation').selectedIndex].text;
-                const fileName = `hotel-route-${startName.replace(/\s+/g, '-')}-to-${endName.replace(/\s+/g, '-')}.png`.toLowerCase();
-                
-                link.download = fileName;
-                link.href = canvas.toDataURL('image/png');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showNotification('QR code downloaded successfully!', 'success');
+                try {
+                    const link = document.createElement('a');
+                    const startSelect = document.getElementById('startLocation');
+                    const endSelect = document.getElementById('endLocation');
+                    
+                    let startName = 'Start';
+                    let endName = 'End';
+                    
+                    if (startSelect && endSelect) {
+                        const startOption = startSelect.options[startSelect.selectedIndex];
+                        const endOption = endSelect.options[endSelect.selectedIndex];
+                        startName = startOption ? startOption.text : 'Start';
+                        endName = endOption ? endOption.text : 'End';
+                    }
+                    
+                    const fileName = `hotel-route-${startName.replace(/\s+/g, '-').substring(0, 20)}-to-${endName.replace(/\s+/g, '-').substring(0, 20)}.png`.toLowerCase();
+                    
+                    link.download = fileName;
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showNotification('QR code downloaded successfully!', 'success');
+                } catch (e) {
+                    console.log('Error downloading QR:', e.message);
+                    showNotification('Error downloading QR code', 'error');
+                }
             } else {
                 showNotification('QR code not generated yet. Please find a route first.', 'error');
             }
@@ -1018,56 +1041,23 @@ window.onload = function() {
             const end = params.get('end');
             
             if (start && end) {
-                document.getElementById('startLocation').value = start;
-                document.getElementById('endLocation').value = end;
-                setTimeout(() => findRoute(), 1000);
-                showNotification('Loading route from shared link...', 'info');
-            }
-        }
-
-        // Function to sync data between tabs
-        function syncData() {
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'hotelHopperData') {
-                    try {
-                        hotelData = JSON.parse(e.newValue);
-                        if (currentFloorView) {
-                            renderMap();
-                        }
-                        populateLocations();
-                        populateFloorSelector();
-                        showNotification('Hotel data updated from admin panel', 'info');
-                    } catch (err) {
-                        console.error('Error syncing data:', err);
-                    }
+                const startSelect = document.getElementById('startLocation');
+                const endSelect = document.getElementById('endLocation');
+                
+                if (startSelect && endSelect) {
+                    startSelect.value = start;
+                    endSelect.value = end;
+                    setTimeout(() => findRoute(), 1000);
+                    showNotification('Loading route from shared link...', 'info');
                 }
-            });
-        }
-
-        // Check for updates from admin panel
-        function checkForUpdates() {
-            const currentData = localStorage.getItem('hotelHopperData');
-            if (currentData) {
-                const currentHash = btoa(currentData).substring(0, 32);
-                if (lastDataHash && currentHash !== lastDataHash) {
-                    // Data changed, reload
-                    loadData();
-                    if (currentRoute) {
-                        // Recalculate current route
-                        const startVal = document.getElementById('startLocation').value;
-                        const endVal = document.getElementById('endLocation').value;
-                        if (startVal && endVal) {
-                            setTimeout(() => findRoute(), 100);
-                        }
-                    }
-                }
-                lastDataHash = currentHash;
             }
         }
 
         // Show notification
         function showNotification(message, type = 'info') {
             const container = document.getElementById('notificationContainer');
+            if (!container) return;
+            
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             notification.innerHTML = `
@@ -1097,28 +1087,24 @@ window.onload = function() {
 
         // Initialize
         window.onload = function() {
+            console.log('Initializing Hotel Hopper...');
             loadData();
-            loadRouteFromURL();
-            syncData();
-            
-            // Check for updates every 2 seconds
-            setInterval(checkForUpdates, 2000);
             
             // Auto-refresh data every 30 seconds
             setInterval(() => {
                 if (Object.keys(hotelData.floors).length > 0) {
-                    const currentData = localStorage.getItem('hotelHopperData');
-                    if (currentData) {
-                        try {
+                    try {
+                        const currentData = localStorage.getItem('hotelHopperData');
+                        if (currentData) {
                             hotelData = JSON.parse(currentData);
                             if (currentFloorView) {
                                 renderMap();
                             }
                             populateLocations();
                             populateFloorSelector();
-                        } catch (e) {
-                            console.error('Error refreshing data:', e);
                         }
+                    } catch (e) {
+                        console.log('Error refreshing data:', e.message);
                     }
                 }
             }, 30000);
