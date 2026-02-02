@@ -112,8 +112,10 @@
             position: relative;
             background: #ffffff;
             border-radius: 12px;
-            overflow: hidden;
+            overflow: auto !important; /* Changed from hidden to auto */
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            min-height: 600px;
         }
         
         .sidebar-item {
@@ -240,21 +242,17 @@
             background-color: white !important;
         }
         
-        /* FIX: Better connection line rendering */
-        .floor-plan-container {
-            position: relative;
-            background: #ffffff;
-            border-radius: 12px;
-            overflow: auto !important; /* Changed from hidden to auto */
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            height: 600px;
-        }
+       .floor-plan-container img {
+    display: block;
+    width: auto; /* Changed from 100% to auto */
+    max-width: 100%; /* Still responsive but maintains aspect ratio */
+    height: auto;
+    margin: 0 auto; /* Center the image */
+}
         
-        .floor-plan-container img {
-            max-width: none !important;
-            height: auto !important;
-            display: block;
+        /* FIX: Make markers always visible */
+        .marker {
+            z-index: 100;
         }
     </style>
 </head>
@@ -925,23 +923,31 @@
             }
         }
 
-        // ========== MISSING FUNCTIONS ADDED ==========
+        // ========== FIXED: MARKER POSITIONING ==========
 
-        // Handle floor plan click for adding markers
-        function handleFloorPlanClick(e) {
-            if (!editMode || !currentFloor) return;
-            
-            const img = e.target;
-            const rect = img.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-            
-            if (editMode === 'add') {
-                tempMarkerPosition = { x, y };
-                document.getElementById('markerModal').classList.remove('hidden');
-            }
+        // Handle floor plan click for adding markers - FIXED VERSION
+      function handleFloorPlanClick(e) {
+    if (!editMode || !currentFloor) return;
+    
+    const container = document.getElementById('floorPlanContainer');
+    const img = container.querySelector('img');
+    if (!img) return;
+    
+    // Get the image's actual position and dimensions
+    const imgRect = img.getBoundingClientRect();
+    
+    // Calculate click position relative to the image (0-100%)
+    const x = ((e.clientX - imgRect.left) / imgRect.width) * 100;
+    const y = ((e.clientY - imgRect.top) / imgRect.height) * 100;
+    
+    // Only proceed if click is within the image bounds
+    if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
+        if (editMode === 'add') {
+            tempMarkerPosition = { x, y };
+            document.getElementById('markerModal').classList.remove('hidden');
         }
-
+    }
+}
         // Select icon in modal
         function selectIcon(icon) {
             selectedIcon = icon;
@@ -1168,11 +1174,14 @@
             
             console.log(`Rendering ${floor.markers.length} markers for floor ${currentFloor}`);
             
-            floor.markers.forEach(marker => {
-                const markerEl = document.createElement('div');
-                markerEl.className = 'marker';
-                markerEl.style.left = marker.x + '%';
-                markerEl.style.top = marker.y + '%';
+    floor.markers.forEach(marker => {
+        const markerEl = document.createElement('div');
+        markerEl.className = 'marker';
+        
+        // Position marker relative to the image within container
+        markerEl.style.left = `${marker.x}%`;
+        markerEl.style.top = `${marker.y}%`;
+                
                 markerEl.innerHTML = marker.icon;
                 markerEl.title = marker.name;
                 markerEl.onclick = (e) => handleMarkerClick(marker.id, e);
@@ -1206,7 +1215,7 @@
             });
         }
 
-        // Draw connection line - FIXED VERSION
+        // Draw connection line - FIXED VERSION (using percentage positioning)
         function drawLine(container, marker1, marker2, isTemp = false) {
             const line = document.createElement('div');
             line.className = 'connection-line';
@@ -1215,7 +1224,7 @@
             // Get container dimensions
             const containerRect = container.getBoundingClientRect();
             
-            // Calculate absolute positions based on percentages
+            // Calculate positions in pixels based on percentages
             const x1 = (marker1.x / 100) * containerRect.width;
             const y1 = (marker1.y / 100) * containerRect.height;
             const x2 = (marker2.x / 100) * containerRect.width;
@@ -1230,12 +1239,13 @@
             // Calculate angle (in degrees)
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
             
-            // Position line at center of marker1 (absolute positioning)
+            // Position line at center of marker1
             line.style.position = 'absolute';
-            line.style.left = x1 + 'px';
-            line.style.top = y1 + 'px';
-            line.style.width = distance + 'px';
+            line.style.left = `${marker1.x}%`;
+            line.style.top = `${marker1.y}%`;
+            line.style.width = `${distance}px`;
             line.style.transform = `rotate(${angle}deg)`;
+            line.style.transformOrigin = '0 0';
             
             // Make sure line is visible
             line.style.zIndex = '5';
@@ -1586,12 +1596,14 @@
                 return;
             }
             
-            const img = document.createElement('img');
-            img.src = floor.floorPlanUrl;
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            img.onclick = handleFloorPlanClick;
+const img = document.createElement('img');
+    img.src = floor.floorPlanUrl;
+    img.style.width = 'auto'; // Changed from '100%' to 'auto'
+    img.style.maxWidth = '100%'; // Still responsive
+    img.style.height = 'auto';
+    img.style.display = 'block';
+    img.style.margin = '0 auto'; // Center the image
+    img.onclick = handleFloorPlanClick;
             
             // FIX: Ensure the image is fully loaded before rendering markers
             img.onload = function() {
