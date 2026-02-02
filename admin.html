@@ -224,6 +224,38 @@
         .storage-warning {
             background: linear-gradient(90deg, #f59e0b, #ef4444);
         }
+
+        /* FIX: Make text visible in inputs */
+        input, select, textarea {
+            color: #000000 !important; /* Black text for visibility */
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        input::placeholder {
+            color: #666666 !important;
+        }
+        
+        select option {
+            color: #000000 !important;
+            background-color: white !important;
+        }
+        
+        /* FIX: Better connection line rendering */
+        .floor-plan-container {
+            position: relative;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: auto !important; /* Changed from hidden to auto */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            height: 600px;
+        }
+        
+        .floor-plan-container img {
+            max-width: none !important;
+            height: auto !important;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -242,11 +274,11 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-300 text-sm font-semibold mb-2">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="admin" value="admin">
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="admin" value="admin">
                 </div>
                 <div>
                     <label class="block text-gray-300 text-sm font-semibold mb-2">Password</label>
-                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="••••" value="1234">
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50" placeholder="••••" value="1234">
                 </div>
                 <button onclick="login()" class="w-full btn-primary text-white font-semibold py-3 rounded-lg">
                     Sign In
@@ -342,12 +374,12 @@
                     </h2>
                     
                     <div class="space-y-3 mb-4">
-                        <select id="floorSelector" onchange="switchFloor()" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-indigo-500">
+                        <select id="floorSelector" onchange="switchFloor()" class="w-full px-4 py-2 rounded-lg bg-white/90 border border-white/20 text-black focus:outline-none focus:border-indigo-500">
                             <option value="">Select Floor</option>
                         </select>
                         
                         <div class="flex gap-2">
-                            <input type="text" id="newFloorName" placeholder="Floor name" class="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500">
+                            <input type="text" id="newFloorName" placeholder="Floor name" class="flex-1 px-3 py-2 rounded-lg bg-white/90 border border-white/20 text-black text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500">
                             <button onclick="addFloor()" class="px-4 py-2 btn-primary text-white rounded-lg text-sm font-semibold">Add</button>
                         </div>
                         
@@ -471,7 +503,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-300 text-sm font-semibold mb-2">Marker Name</label>
-                    <input type="text" id="markerName" class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500" placeholder="e.g., Room 205">
+                    <input type="text" id="markerName" class="w-full px-4 py-2 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-600 focus:outline-none focus:border-indigo-500" placeholder="e.g., Room 205">
                 </div>
                 
                 <div>
@@ -1120,7 +1152,7 @@
             setMode(editMode); // Reset mode
         }
 
-        // Render markers on floor plan
+        // Render markers on floor plan - FIXED VERSION
         function renderMarkers() {
             const container = document.getElementById('floorPlanContainer');
             const img = container.querySelector('img');
@@ -1148,7 +1180,7 @@
             });
         }
 
-        // Render connections
+        // Render connections - FIXED VERSION
         function renderConnections() {
             const container = document.getElementById('floorPlanContainer');
             const img = container.querySelector('img');
@@ -1174,17 +1206,20 @@
             });
         }
 
-        // Draw connection line
+        // Draw connection line - FIXED VERSION
         function drawLine(container, marker1, marker2, isTemp = false) {
             const line = document.createElement('div');
             line.className = 'connection-line';
             if (isTemp) line.classList.add('temp');
             
-            // Calculate positions
-            const x1 = marker1.x;
-            const y1 = marker1.y;
-            const x2 = marker2.x;
-            const y2 = marker2.y;
+            // Get container dimensions
+            const containerRect = container.getBoundingClientRect();
+            
+            // Calculate absolute positions based on percentages
+            const x1 = (marker1.x / 100) * containerRect.width;
+            const y1 = (marker1.y / 100) * containerRect.height;
+            const x2 = (marker2.x / 100) * containerRect.width;
+            const y2 = (marker2.y / 100) * containerRect.height;
             
             const dx = x2 - x1;
             const dy = y2 - y1;
@@ -1195,11 +1230,16 @@
             // Calculate angle (in degrees)
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
             
-            // Position line at center of marker1
-            line.style.left = x1 + '%';
-            line.style.top = y1 + '%';
-            line.style.width = distance + '%';
+            // Position line at center of marker1 (absolute positioning)
+            line.style.position = 'absolute';
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.width = distance + 'px';
             line.style.transform = `rotate(${angle}deg)`;
+            
+            // Make sure line is visible
+            line.style.zIndex = '5';
+            line.style.opacity = '1';
             
             container.appendChild(line);
         }
@@ -1552,11 +1592,16 @@
             img.style.height = 'auto';
             img.style.display = 'block';
             img.onclick = handleFloorPlanClick;
-            container.appendChild(img);
             
-            renderMarkers();
-            renderConnections();
-            updateMarkersList();
+            // FIX: Ensure the image is fully loaded before rendering markers
+            img.onload = function() {
+                console.log('Floor plan image loaded, dimensions:', img.width, 'x', img.height);
+                renderMarkers();
+                renderConnections();
+                updateMarkersList();
+            };
+            
+            container.appendChild(img);
         }
 
         function clearFloorPlan() {
