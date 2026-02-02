@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel Hopper Admin Panel</title>
-    <!-- Keep CDN for development, ignore the warning -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Using unpkg CDN instead of cdn.tailwindcss.com to avoid production warning -->
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -512,151 +512,188 @@
         let connectionStartMarker = null;
         let dataVersion = 1;
         
-        // IndexedDB for image storage
+        // IndexedDB for image storage - DISABLED FOR GITHUB PAGES
         let imageDB = null;
         const DB_NAME = 'HotelHopperImages';
         const DB_VERSION = 1;
         const STORE_NAME = 'floorPlans';
+        const USE_INDEXEDDB = false; // Disabled for GitHub Pages compatibility
 
-function initImageDB() {
-    return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-            console.log('IndexedDB not supported, using localStorage only');
-            resolve(false);
-            return;
-        }
-        
-        // Wrap in try-catch to handle any initialization errors
-        try {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            
-            request.onupgradeneeded = function(event) {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME, { keyPath: 'floorId' });
+        // Initialize IndexedDB - Modified to be more tolerant
+        function initImageDB() {
+            return new Promise((resolve, reject) => {
+                if (!USE_INDEXEDDB || !window.indexedDB) {
+                    console.log('IndexedDB disabled or not supported');
+                    resolve(false);
+                    return;
                 }
-            };
-            
-            request.onsuccess = function(event) {
-                imageDB = event.target.result;
-                console.log('IndexedDB initialized successfully');
-                resolve(true);
-            };
-            
-            request.onerror = function(event) {
-                console.log('IndexedDB initialization failed, falling back to localStorage');
-                // Don't reject, just resolve with false
-                resolve(false);
-            };
-            
-            request.onblocked = function(event) {
-                console.log('IndexedDB blocked, falling back to localStorage');
-                resolve(false);
-            };
-        } catch (e) {
-            console.log('IndexedDB error, using localStorage:', e);
-            resolve(false);
+                
+                // Add timeout for safety
+                const timeoutId = setTimeout(() => {
+                    console.log('IndexedDB initialization timeout');
+                    resolve(false);
+                }, 2000);
+                
+                try {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    
+                    request.onupgradeneeded = function(event) {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME, { keyPath: 'floorId' });
+                        }
+                    };
+                    
+                    request.onsuccess = function(event) {
+                        clearTimeout(timeoutId);
+                        imageDB = event.target.result;
+                        console.log('IndexedDB initialized successfully');
+                        resolve(true);
+                    };
+                    
+                    request.onerror = function(event) {
+                        clearTimeout(timeoutId);
+                        console.log('IndexedDB initialization failed silently');
+                        resolve(false);
+                    };
+                    
+                    request.onblocked = function(event) {
+                        clearTimeout(timeoutId);
+                        console.log('IndexedDB blocked');
+                        resolve(false);
+                    };
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    console.log('IndexedDB caught error:', e.message);
+                    resolve(false);
+                }
+            });
         }
-    });
-}
+
         // Save image to IndexedDB
         async function saveImageToDB(floorId, imageData) {
-            if (!imageDB) return false;
+            if (!USE_INDEXEDDB || !imageDB) return false;
             
             return new Promise((resolve, reject) => {
-                const transaction = imageDB.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                
-                const record = {
-                    floorId: floorId,
-                    data: imageData,
-                    timestamp: Date.now()
-                };
-                
-                const request = store.put(record);
-                
-                request.onsuccess = function() {
-                    resolve(true);
-                };
-                
-                request.onerror = function(event) {
-                    console.error('Error saving image to IndexedDB:', event);
+                try {
+                    const transaction = imageDB.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    
+                    const record = {
+                        floorId: floorId,
+                        data: imageData,
+                        timestamp: Date.now()
+                    };
+                    
+                    const request = store.put(record);
+                    
+                    request.onsuccess = function() {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = function(event) {
+                        console.log('Error saving image to IndexedDB (silent)');
+                        resolve(false);
+                    };
+                } catch (e) {
+                    console.log('Exception saving to IndexedDB:', e.message);
                     resolve(false);
-                };
+                }
             });
         }
 
         // Get image from IndexedDB
         async function getImageFromDB(floorId) {
-            if (!imageDB) return null;
+            if (!USE_INDEXEDDB || !imageDB) return null;
             
             return new Promise((resolve, reject) => {
-                const transaction = imageDB.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(floorId);
-                
-                request.onsuccess = function() {
-                    if (request.result) {
-                        resolve(request.result.data);
-                    } else {
+                try {
+                    const transaction = imageDB.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.get(floorId);
+                    
+                    request.onsuccess = function() {
+                        if (request.result) {
+                            resolve(request.result.data);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    
+                    request.onerror = function(event) {
+                        console.log('Error getting image from IndexedDB (silent)');
                         resolve(null);
-                    }
-                };
-                
-                request.onerror = function(event) {
-                    console.error('Error getting image from IndexedDB:', event);
+                    };
+                } catch (e) {
+                    console.log('Exception getting from IndexedDB:', e.message);
                     resolve(null);
-                };
+                }
             });
         }
 
         // Delete image from IndexedDB
         async function deleteImageFromDB(floorId) {
-            if (!imageDB) return;
+            if (!USE_INDEXEDDB || !imageDB) return;
             
             return new Promise((resolve, reject) => {
-                const transaction = imageDB.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.delete(floorId);
-                
-                request.onsuccess = function() {
-                    resolve(true);
-                };
-                
-                request.onerror = function(event) {
-                    console.error('Error deleting image from IndexedDB:', event);
+                try {
+                    const transaction = imageDB.transaction([STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.delete(floorId);
+                    
+                    request.onsuccess = function() {
+                        resolve(true);
+                    };
+                    
+                    request.onerror = function(event) {
+                        console.log('Error deleting image from IndexedDB (silent)');
+                        resolve(false);
+                    };
+                } catch (e) {
+                    console.log('Exception deleting from IndexedDB:', e.message);
                     resolve(false);
-                };
+                }
             });
         }
 
         // Compress image before saving
         async function compressImage(base64Image, maxWidth = 1200, quality = 0.7) {
             return new Promise((resolve) => {
+                // If compression fails, return original
+                if (!base64Image || !base64Image.startsWith('data:image')) {
+                    resolve(base64Image);
+                    return;
+                }
+                
                 const img = new Image();
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    // Calculate new dimensions if too large
-                    if (width > maxWidth) {
-                        height = (height * maxWidth) / width;
-                        width = maxWidth;
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Calculate new dimensions if too large
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to compressed JPEG
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedBase64);
+                    } catch (e) {
+                        console.log('Image compression failed, using original');
+                        resolve(base64Image);
                     }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Convert to compressed JPEG
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-                    resolve(compressedBase64);
                 };
                 img.onerror = function() {
-                    // If compression fails, return original
+                    console.log('Image load error in compression');
                     resolve(base64Image);
                 };
                 img.src = base64Image;
@@ -686,20 +723,22 @@ function initImageDB() {
                 const fill = document.getElementById('storageFill');
                 const text = document.getElementById('storageText');
                 
-                fill.style.width = `${Math.min(100, percentage)}%`;
-                text.textContent = `${Math.round(percentage)}%`;
-                
-                if (percentage > 80) {
-                    fill.classList.add('storage-warning');
-                } else {
-                    fill.classList.remove('storage-warning');
+                if (fill && text) {
+                    fill.style.width = `${Math.min(100, percentage)}%`;
+                    text.textContent = `${Math.round(percentage)}%`;
+                    
+                    if (percentage > 80) {
+                        fill.classList.add('storage-warning');
+                    } else {
+                        fill.classList.remove('storage-warning');
+                    }
                 }
                 
                 console.log(`Storage: ${(totalUsed / 1024 / 1024).toFixed(2)}MB / 5MB (${Math.round(percentage)}%)`);
                 
                 return { used: totalUsed, percentage, max: maxStorage };
             } catch (e) {
-                console.error('Error checking storage:', e);
+                console.log('Error checking storage (silent):', e.message);
                 return { used: 0, percentage: 0, max: 0 };
             }
         }
@@ -711,93 +750,25 @@ function initImageDB() {
             if (saved) {
                 try {
                     hotelData = JSON.parse(saved);
-                    console.log('Loaded data:', hotelData);
-
-                    function loadData() {
-    console.log('Attempting to load hotel data...');
-    
-    const saved = localStorage.getItem('hotelHopperData');
-    if (saved) {
-        try {
-            hotelData = JSON.parse(saved);
-            console.log('Data loaded successfully, floors:', Object.keys(hotelData.floors).length);
-            
-            if (Object.keys(hotelData.floors).length > 0) {
-                populateLocations();
-                populateFloorSelector();
-                setupDataSync();
-                showNotification('Hotel data loaded successfully!', 'success');
-                
-                // Check if images need to be loaded from IndexedDB
-                loadImagesFromIndexedDB();
-                return;
-            } else {
-                showDataNotFoundMessage();
-            }
-        } catch (e) {
-            console.error('Error parsing saved data:', e);
-            showNotification('Error loading hotel data', 'error');
-            showDataNotFoundMessage();
-        }
-    } else {
-        showDataNotFoundMessage();
-    }
-}
-
-// New function to handle IndexedDB image loading in guest site
-async function loadImagesFromIndexedDB() {
-    if (!window.indexedDB) return;
-    
-    try {
-        const request = indexedDB.open('HotelHopperImages', 1);
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            const transaction = db.transaction(['floorPlans'], 'readonly');
-            const store = transaction.objectStore('floorPlans');
-            
-            Object.keys(hotelData.floors).forEach(floorNum => {
-                const floor = hotelData.floors[floorNum];
-                if (floor.floorPlanUrl === 'indexeddb' || !floor.floorPlanUrl) {
-                    const getRequest = store.get(floorNum);
-                    getRequest.onsuccess = function() {
-                        if (getRequest.result) {
-                            floor.floorPlanUrl = getRequest.result.data;
-                            // If we're viewing this floor, re-render
-                            if (currentFloorView === floorNum) {
-                                renderMap();
-                            }
-                        }
-                    };
-                }
-            });
-        };
-    } catch (e) {
-        console.log('Could not load images from IndexedDB:', e);
-    }
-}
+                    console.log('Loaded data:', Object.keys(hotelData.floors).length, 'floors');
                     
-                    // Try to load images from IndexedDB
-                    await initImageDB();
-                    if (imageDB) {
-                        for (const floorNum in hotelData.floors) {
-                            const floor = hotelData.floors[floorNum];
-                            if (!floor.floorPlanUrl || floor.floorPlanUrl === 'indexeddb') {
-                                const imageData = await getImageFromDB(floorNum);
-                                if (imageData) {
-                                    floor.floorPlanUrl = imageData;
-                                } else if (floor.floorPlanUrl === 'indexeddb') {
-                                    floor.floorPlanUrl = null;
-                                }
-                            }
+                    // Initialize IndexedDB but don't wait for it
+                    initImageDB().then(success => {
+                        if (success) {
+                            console.log('IndexedDB available for image storage');
                         }
-                    }
+                    }).catch(() => {
+                        console.log('IndexedDB initialization failed');
+                    });
                     
                     updateStats();
                     checkStorageUsage();
                 } catch (e) {
-                    console.error('Error loading data:', e);
+                    console.log('Error loading data:', e.message);
                     showNotification('Error loading saved data', 'error');
                 }
+            } else {
+                console.log('No saved data found');
             }
             updateFloorSelector();
         }
@@ -826,7 +797,7 @@ async function loadImagesFromIndexedDB() {
                     const floorCopy = {
                         name: floor.name,
                         floorNumber: floorNum.toString(),
-                        floorPlanUrl: null, // Don't save images in localStorage
+                        floorPlanUrl: floor.floorPlanUrl, // Store directly in localStorage
                         markers: floor.markers.map(m => ({
                             id: m.id,
                             x: m.x,
@@ -836,19 +807,6 @@ async function loadImagesFromIndexedDB() {
                         })),
                         connections: floor.connections
                     };
-                    
-                    // Save image to IndexedDB if available
-                    if (floor.floorPlanUrl && floor.floorPlanUrl.startsWith('data:image')) {
-                        if (imageDB) {
-                            // Compress image first
-                            const compressedImage = await compressImage(floor.floorPlanUrl, 1200, 0.7);
-                            await saveImageToDB(floorNum, compressedImage);
-                            floorCopy.floorPlanUrl = 'indexeddb'; // Marker for IndexedDB storage
-                        } else {
-                            // Fallback to localStorage (limited)
-                            floorCopy.floorPlanUrl = floor.floorPlanUrl;
-                        }
-                    }
                     
                     optimizedData.floors[floorNum] = floorCopy;
                 }
@@ -861,6 +819,13 @@ async function loadImagesFromIndexedDB() {
                 // Save to localStorage
                 localStorage.setItem('hotelHopperData', dataString);
                 
+                // Also save to sessionStorage for redundancy
+                try {
+                    sessionStorage.setItem('hotelHopperData', dataString);
+                } catch (e) {
+                    console.log('Could not save to sessionStorage');
+                }
+                
                 // Broadcast update
                 broadcastDataUpdate(optimizedData);
                 
@@ -870,11 +835,11 @@ async function loadImagesFromIndexedDB() {
                 dataVersion++;
                 
             } catch (e) {
-                console.error('Error saving data:', e);
+                console.log('Error saving data:', e.message);
                 if (e.name === 'QuotaExceededError') {
                     showNotification('Storage full! Try optimizing images or clearing cache.', 'error');
                 } else {
-                    showNotification('Error saving data: ' + e.message, 'error');
+                    showNotification('Error saving data', 'error');
                 }
             }
         }
@@ -891,14 +856,18 @@ async function loadImagesFromIndexedDB() {
                     const base64Length = floor.floorPlanUrl.length - (floor.floorPlanUrl.indexOf(',') + 1);
                     const currentSize = Math.round((base64Length * 3) / 4);
                     
-                    if (currentSize > 500 * 1024) { // Only compress if > 500KB
-                        const compressed = await compressImage(floor.floorPlanUrl, 800, 0.6);
-                        floor.floorPlanUrl = compressed;
-                        compressedCount++;
-                        
-                        const newBase64Length = compressed.length - (compressed.indexOf(',') + 1);
-                        const newSize = Math.round((newBase64Length * 3) / 4);
-                        console.log(`Compressed floor ${floorNum}: ${(currentSize/1024).toFixed(1)}KB → ${(newSize/1024).toFixed(1)}KB`);
+                    if (currentSize > 100 * 1024) { // Only compress if > 100KB
+                        try {
+                            const compressed = await compressImage(floor.floorPlanUrl, 800, 0.6);
+                            floor.floorPlanUrl = compressed;
+                            compressedCount++;
+                            
+                            const newBase64Length = compressed.length - (compressed.indexOf(',') + 1);
+                            const newSize = Math.round((newBase64Length * 3) / 4);
+                            console.log(`Compressed floor ${floorNum}: ${(currentSize/1024).toFixed(1)}KB → ${(newSize/1024).toFixed(1)}KB`);
+                        } catch (e) {
+                            console.log('Failed to compress floor', floorNum);
+                        }
                     }
                 }
             }
@@ -1299,7 +1268,7 @@ async function loadImagesFromIndexedDB() {
                 URL.revokeObjectURL(url);
                 showNotification('Data exported successfully!', 'success');
             } catch (e) {
-                console.error('Error exporting data:', e);
+                console.log('Error exporting data:', e.message);
                 showNotification('Error exporting data', 'error');
             }
         }
@@ -1314,9 +1283,9 @@ async function loadImagesFromIndexedDB() {
                 return;
             }
             
-            // Check file size (max 50MB for import)
-            if (file.size > 50 * 1024 * 1024) {
-                showNotification('File too large (max 50MB)', 'error');
+            // Check file size (max 10MB for import)
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('File too large (max 10MB)', 'error');
                 return;
             }
             
@@ -1343,7 +1312,7 @@ async function loadImagesFromIndexedDB() {
                         fileInput.value = '';
                     }
                 } catch (e) {
-                    console.error('Error importing data:', e);
+                    console.log('Error importing data:', e.message);
                     showNotification('Error importing data. Invalid JSON format.', 'error');
                 }
             };
@@ -1370,7 +1339,7 @@ async function loadImagesFromIndexedDB() {
                     showNotification('Data copied to clipboard!', 'success');
                 });
             } catch (e) {
-                console.error('Error copying data:', e);
+                console.log('Error copying data:', e.message);
                 showNotification('Error copying data', 'error');
             }
         }
@@ -1387,7 +1356,7 @@ async function loadImagesFromIndexedDB() {
                         timestamp: Date.now()
                     });
                 } catch (e) {
-                    console.log('BroadcastChannel error:', e);
+                    console.log('BroadcastChannel error:', e.message);
                 }
             }
         }
@@ -1417,7 +1386,7 @@ async function loadImagesFromIndexedDB() {
                 connections: []
             };
             
-            console.log(`Added floor ${floorNum}:`, hotelData.floors[floorNum]);
+            console.log(`Added floor ${floorNum}:`, name);
             
             document.getElementById('newFloorName').value = '';
             updateFloorSelector();
@@ -1551,7 +1520,7 @@ async function loadImagesFromIndexedDB() {
                     // Clear file input
                     document.getElementById('floorPlanInput').value = '';
                 } catch (error) {
-                    console.error('Error processing image:', error);
+                    console.log('Error processing image:', error.message);
                     showNotification('Error processing image', 'error');
                 }
             };
@@ -1582,7 +1551,7 @@ async function loadImagesFromIndexedDB() {
             img.style.width = '100%';
             img.style.height = 'auto';
             img.style.display = 'block';
-            img.onclick = handleFloorPlanClick; // This was missing!
+            img.onclick = handleFloorPlanClick;
             container.appendChild(img);
             
             renderMarkers();
@@ -1756,18 +1725,22 @@ async function loadImagesFromIndexedDB() {
             
             // Listen for BroadcastChannel messages
             if (typeof BroadcastChannel !== 'undefined') {
-                const channel = new BroadcastChannel('hotel-hopper-data');
-                channel.onmessage = function(event) {
-                    if (event.data.type === 'data-update') {
-                        hotelData = event.data.data;
-                        if (currentFloor) {
-                            loadFloorPlan();
+                try {
+                    const channel = new BroadcastChannel('hotel-hopper-data');
+                    channel.onmessage = function(event) {
+                        if (event.data.type === 'data-update') {
+                            hotelData = event.data.data;
+                            if (currentFloor) {
+                                loadFloorPlan();
+                            }
+                            updateFloorSelector();
+                            updateStats();
+                            showNotification('Data updated from another tab', 'info');
                         }
-                        updateFloorSelector();
-                        updateStats();
-                        showNotification('Data updated from another tab', 'info');
-                    }
-                };
+                    };
+                } catch (e) {
+                    console.log('BroadcastChannel not available');
+                }
             }
         };
     </script>
