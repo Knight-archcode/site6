@@ -7,22 +7,22 @@
     <link rel="stylesheet" href="admin.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Add to admin/index.html head -->
-<script src="image-upload.js"></script>
+    <script src="image-upload.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-6">
         <!-- Login Form -->
-    <!--    <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow">
+        <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow">
             <h2 class="text-2xl font-bold text-center text-blue-800 mb-6">Hotel Navigator Admin Page</h2>
             <form id="loginForm">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-gray-700 mb-1">Username</label>
-                        <input type="text" id="username" class="w-full p-2 border border-gray-300 rounded" placeholder="admin" autocomplete="off" required />
+                        <input type="text" id="username" class="w-full p-2 border border-gray-300 rounded" placeholder="admin" autocomplete="off" value="admin" required />
                     </div>
                     <div>
                         <label class="block text-gray-700 mb-1">Password</label>
-                        <input type="password" id="password" class="w-full p-2 border border-gray-300 rounded" placeholder="••••" autocomplete="off" required />
+                        <input type="password" id="password" class="w-full p-2 border border-gray-300 rounded" placeholder="••••" autocomplete="off" value="1234" required />
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                         Login
@@ -33,10 +33,10 @@
                     </p>
                 </div>
             </form>
-        </div> -->
+        </div>
 
         <!-- Admin Panel -->
-        <div id="adminPanel" class="show">
+        <div id="adminPanel" class="hidden">
             <header class="mb-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold text-blue-800">🏨 Hotel Navigator Admin</h1>
@@ -85,6 +85,9 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Map Editor</h2>
                 <div id="mapContainer" style="position: relative; height: 500px; background: #f9fafb; border: 1px dashed #d1d5db; overflow: hidden;">
                     <img id="floorPlanImg" src="" alt="Floor Plan" style="display: none; max-width: 100%; max-height: 100%; position: absolute; top: 0; left: 0;" />
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-500" id="mapPlaceholder">
+                        Upload a floor plan image to get started
+                    </div>
                 </div>
             </div>
 
@@ -122,6 +125,59 @@
         </div>
     </div>
 
+    <script>
+        // Simple login logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginSection = document.getElementById('loginSection');
+            const adminPanel = document.getElementById('adminPanel');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginError = document.getElementById('loginError');
+            
+            // Check if already logged in
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                loginSection.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+            }
+            
+            // Handle login
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (username === 'admin' && password === '1234') {
+                        // Successful login
+                        sessionStorage.setItem('adminLoggedIn', 'true');
+                        loginSection.classList.add('hidden');
+                        adminPanel.classList.remove('hidden');
+                        loginError.classList.add('hidden');
+                    } else {
+                        // Failed login
+                        loginError.classList.remove('hidden');
+                    }
+                });
+            }
+            
+            // Handle logout
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    sessionStorage.removeItem('adminLoggedIn');
+                    adminPanel.classList.add('hidden');
+                    loginSection.classList.remove('hidden');
+                    // Reset form
+                    if (loginForm) {
+                        loginForm.reset();
+                        document.getElementById('username').value = 'admin';
+                        document.getElementById('password').value = '1234';
+                    }
+                });
+            }
+        });
+    </script>
+    
     <script src="admin.js"></script>
 </body>
 </html>
