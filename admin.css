@@ -1,0 +1,390 @@
+/* ===== ADMIN PANEL STYLES ===== */
+
+* {
+    font-family: system-ui, -apple-system, sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ===== GLASS PANEL EFFECT ===== */
+.bg-white, #loginSection, .bg-white.rounded-lg {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ===== TEXT STYLING ===== */
+.text-blue-800, h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+}
+
+.text-gray-600, .text-gray-700, .text-gray-800, .text-gray-500 {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+label {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ===== INPUT FIELDS ===== */
+input, select, textarea {
+    color: #000000 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+input::placeholder {
+    color: #666666 !important;
+}
+
+select option {
+    color: #000000 !important;
+    background-color: white !important;
+}
+
+/* ===== BUTTON STYLING ===== */
+button {
+    transition: all 0.3s ease !important;
+}
+
+button:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* Primary buttons */
+.bg-blue-600 {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+}
+
+.bg-blue-600:hover {
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5) !important;
+}
+
+/* Danger buttons */
+.bg-red-600 {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+/* Success buttons */
+.bg-green-600 {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+/* Warning buttons */
+.bg-yellow-600 {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+}
+
+/* Purple buttons */
+.bg-purple-600 {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+}
+
+/* Orange buttons */
+.bg-orange-600 {
+    background: linear-gradient(135deg, #f97316, #ea580c) !important;
+}
+
+/* Gray buttons */
+.bg-gray-600 {
+    background: linear-gradient(135deg, #4b5563, #374151) !important;
+}
+
+/* ===== MAP CONTAINER ===== */
+#mapContainer {
+    background: #ffffff !important;
+    border-radius: 12px;
+    overflow: auto !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    min-height: 500px;
+    position: relative;
+}
+
+#mapPlaceholder {
+    color: #666666 !important;
+}
+
+/* Floor plan image */
+#floorPlanImg {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===== MARKER STYLING ===== */
+.marker {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #4f46e5;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    z-index: 10;
+}
+
+.marker:hover {
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+}
+
+.marker.selected {
+    border-color: #f59e0b !important;
+    border-width: 4px !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6) !important;
+    animation: pulse-selected 1.5s infinite;
+}
+
+@keyframes pulse-selected {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1.15);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.25);
+    }
+}
+
+/* ===== CONNECTION LINES ===== */
+.connection-line {
+    position: absolute;
+    height: 4px;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    transform-origin: 0 50%;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    z-index: 5;
+}
+
+.connection-line.temp {
+    background: linear-gradient(90deg, #f59e0b, #f97316);
+    height: 5px;
+    border: 1px dashed #fbbf24;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
+}
+
+/* ===== EDIT MODE BUTTONS ===== */
+#addModeBtn.active,
+#deleteModeBtn.active,
+#connectModeBtn.active,
+#disconnectModeBtn.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.5);
+}
+
+/* ===== MARKERS LIST ===== */
+#markersList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#markersList li {
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#markersList li:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+/* ===== ICON PICKER ===== */
+#iconPicker button {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#iconPicker button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+#iconPicker button.selected {
+    background: rgba(79, 70, 229, 0.5);
+    border-color: #4f46e5;
+}
+
+/* ===== NOTIFICATION STYLES (if you add notifications) ===== */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transform: translateX(150%);
+    transition: transform 0.5s ease;
+    z-index: 1000;
+    border-left: 4px solid;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left-color: #10b981;
+}
+
+.notification.error {
+    border-left-color: #ef4444;
+}
+
+.notification.info {
+    border-left-color: #3b82f6;
+}
+
+.notification.warning {
+    border-left-color: #f59e0b;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(79, 70, 229, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 70, 229, 0.7);
+}
+
+/* ===== FILE UPLOAD STYLING ===== */
+input[type="file"] {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+input[type="file"]::file-selector-button {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, #4338ca, #6d28d9) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+    }
+    
+    .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    #mapContainer {
+        min-height: 400px;
+    }
+    
+    .marker {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+}
+
+/* ===== LOADING STATES ===== */
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== ERROR STATES ===== */
+.error {
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+
+/* ===== SUCCESS STATES ===== */
+.success {
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+}
+
+/* ===== VISIBILITY FIXES ===== */
+.hidden {
+    display: none !important;
+}
+
+#loginError {
+    color: #ef4444 !important;
+}
+
+#floorWarning {
+    color: #f59e0b !important;
+}
