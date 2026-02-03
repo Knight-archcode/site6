@@ -175,42 +175,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const HOTEL_ICONS = ['🛏️', '🚪', '🍽️', '🏊', '💪', '🧼', '🛗', '🚻', '🧳', '☕', '🛎️', '🔒'];
     HOTEL_ICONS.forEach(icon => {
         const btn = document.createElement('button');
+        btn.type = 'button'; // Prevent form submission
         btn.textContent = icon;
         btn.addEventListener('click', () => {
             selectedIcon = icon;
-            iconPicker.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            iconPicker.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
         });
         iconPicker.appendChild(btn);
     });
-    iconPicker.querySelector('button')?.classList.add('active');
+    iconPicker.querySelector('button')?.classList.add('selected');
 
     // === LOGIN ===
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value.trim();
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
 
-        if (user.toLowerCase() === 'admin' && pass === '1234') {
-            isLoggedIn = true;
-            loginSection.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
+            if (user.toLowerCase() === 'admin' && pass === '1234') {
+                isLoggedIn = true;
+                loginSection.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loginError.classList.add('hidden');
+                
+                // Load saved data
+                loadFloor(currentFloor);
+            } else {
+                loginError.classList.remove('hidden');
+                loginSection.style.animation = 'shake 0.5s';
+                setTimeout(() => loginSection.style.animation = '', 500);
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            isLoggedIn = false;
+            adminPanel.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
             loginError.classList.add('hidden');
-        } else {
-            loginError.classList.remove('hidden');
-            loginSection.style.animation = 'shake 0.5s';
-            setTimeout(() => loginSection.style.animation = '', 500);
-        }
-    });
-
-    logoutBtn.addEventListener('click', () => {
-        isLoggedIn = false;
-        adminPanel.classList.add('hidden');
-        loginSection.classList.remove('hidden');
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
-        loginError.classList.add('hidden');
-    });
+        });
+    }
 
     // === FLOOR MANAGEMENT ===
     floorSelect.addEventListener('change', () => {
@@ -314,25 +322,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function setActiveMode(mode) {
         currentMode = mode;
         
-        // Reset all buttons to their default colors
-        addModeBtn.className = 'px-3 py-1 text-sm bg-green-600 text-white rounded';
-        deleteModeBtn.className = 'px-3 py-1 text-sm bg-red-600 text-white rounded';
-        connectModeBtn.className = 'px-3 py-1 text-sm bg-purple-600 text-white rounded';
-        disconnectModeBtn.className = 'px-3 py-1 text-sm bg-orange-600 text-white rounded';
+        // Reset all buttons
+        addModeBtn.classList.remove('active');
+        deleteModeBtn.classList.remove('active');
+        connectModeBtn.classList.remove('active');
+        disconnectModeBtn.classList.remove('active');
         
         // Highlight the active mode button
         switch(mode) {
             case 'add':
-                addModeBtn.className = 'px-3 py-1 text-sm bg-blue-600 text-white rounded';
+                addModeBtn.classList.add('active');
                 break;
             case 'delete':
-                deleteModeBtn.className = 'px-3 py-1 text-sm bg-blue-600 text-white rounded';
+                deleteModeBtn.classList.add('active');
                 break;
             case 'connect':
-                connectModeBtn.className = 'px-3 py-1 text-sm bg-blue-600 text-white rounded';
+                connectModeBtn.classList.add('active');
                 break;
             case 'disconnect':
-                disconnectModeBtn.className = 'px-3 py-1 text-sm bg-blue-600 text-white rounded';
+                disconnectModeBtn.classList.add('active');
                 break;
         }
         
@@ -367,14 +375,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     saveDataBtn.addEventListener('click', () => {
         saveData();
-        alert('✅ Floor data saved successfully!');
+        // Show notification instead of alert
+        showNotification('✅ Floor data saved successfully!', 'success');
     });
+
+    // Create notification function
+    function showNotification(message, type = 'info') {
+        // Create notification container if it doesn't exist
+        let notificationContainer = document.getElementById('notificationContainer');
+        if (!notificationContainer) {
+            notificationContainer = document.createElement('div');
+            notificationContainer.id = 'notificationContainer';
+            document.body.appendChild(notificationContainer);
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="flex items-center gap-3">
+                <span class="text-xl">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span class="text-gray-800 font-medium">${message}</span>
+            </div>
+        `;
+        
+        notificationContainer.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 3000);
+    }
 
     mapContainer.addEventListener('click', handleMapClick);
 
     // === CLICK HANDLER ===
     function handleMapClick(e) {
-        if (!floorPlanImg.src) {
+        if (!floorPlanImg.src || floorPlanImg.style.display === 'none') {
             console.log('No image loaded, cannot place markers');
             return;
         }
@@ -463,6 +507,12 @@ document.addEventListener('DOMContentLoaded', () => {
             el.style.left = `${marker.x}px`;
             el.style.top = `${marker.y}px`;
             mapContainer.appendChild(el);
+            
+            // Add click handler for markers
+            el.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent map click event
+                handleMarkerClick(marker.id, e);
+            });
         });
 
         floorData.connections.forEach(([id1, id2]) => {
@@ -472,15 +522,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 const length = Math.sqrt((m2.x - m1.x) ** 2 + (m2.y - m1.y) ** 2);
                 const angle = Math.atan2(m2.y - m1.y, m2.x - m1.x) * 180 / Math.PI;
                 const div = document.createElement('div');
-                div.className = 'connection';
+                div.className = 'connection-line'; // Changed from 'connection' to 'connection-line'
                 div.style.width = `${length}px`;
                 div.style.height = '4px';
                 div.style.left = `${m1.x}px`;
                 div.style.top = `${m1.y}px`;
                 div.style.transform = `rotate(${angle}deg)`;
+                div.style.transformOrigin = '0 0';
+                div.style.position = 'absolute';
+                div.style.zIndex = '5';
                 mapContainer.appendChild(div);
             }
         });
+    }
+
+    // Handle marker click directly
+    function handleMarkerClick(markerId, e) {
+        const floorData = getFloorData(currentFloor);
+        const marker = floorData.markers.find(m => m.id === markerId);
+        
+        if (!marker) return;
+        
+        if (currentMode === 'delete') {
+            const idToRemove = marker.id;
+            floorData.markers = floorData.markers.filter(m => m.id !== idToRemove);
+            floorData.connections = floorData.connections.filter(([a, b]) => a !== idToRemove && b !== idToRemove);
+            saveData();
+            loadFloor(currentFloor);
+        } else if ((currentMode === 'connect' || currentMode === 'disconnect')) {
+            if (!firstSelectedMarker) {
+                firstSelectedMarker = marker;
+                highlightMarker(marker.id, true);
+            } else {
+                if (firstSelectedMarker.id === marker.id) {
+                    highlightMarker(firstSelectedMarker.id, false);
+                    firstSelectedMarker = null;
+                    return;
+                }
+
+                const connIndex = floorData.connections.findIndex(([a, b]) =>
+                    (a === firstSelectedMarker.id && b === marker.id) ||
+                    (a === marker.id && b === firstSelectedMarker.id)
+                );
+
+                if (currentMode === 'connect' && connIndex === -1) {
+                    floorData.connections.push([firstSelectedMarker.id, marker.id]);
+                } else if (currentMode === 'disconnect' && connIndex !== -1) {
+                    floorData.connections.splice(connIndex, 1);
+                }
+
+                highlightMarker(firstSelectedMarker.id, false);
+                firstSelectedMarker = null;
+                saveData();
+                loadFloor(currentFloor);
+            }
+        }
     }
 
     function updateMarkersList() {
@@ -489,7 +585,13 @@ document.addEventListener('DOMContentLoaded', () => {
         floorData.markers.forEach((m, i) => {
             const item = document.createElement('li');
             item.className = 'location-item';
-            item.innerHTML = `<span>${m.icon} ${m.name}</span><button data-index="${i}" class="text-red-600 hover:text-red-800 text-sm">Remove</button>`;
+            item.innerHTML = `
+                <span class="flex items-center gap-2">
+                    <span class="text-lg">${m.icon}</span>
+                    <span>${m.name}</span>
+                    <span class="text-xs text-gray-500">(${Math.round(m.x)}, ${Math.round(m.y)})</span>
+                </span>
+                <button data-index="${i}" class="px-2 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Remove</button>`;
             markersList.appendChild(item);
         });
         markersList.querySelectorAll('button').forEach(btn => {
@@ -502,5 +604,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadFloor(currentFloor);
             });
         });
+    }
+
+    // Check if user is already logged in
+    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        isLoggedIn = true;
+        loginSection.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loginError.classList.add('hidden');
+        loadFloor(currentFloor);
     }
 });
